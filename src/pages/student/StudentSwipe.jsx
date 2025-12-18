@@ -1,19 +1,17 @@
-import { useState } from 'react'
-import { X, Heart, Star, RotateCcw } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Heart, Star, RotateCcw, Loader } from 'lucide-react'
 import SwipeCard from '../../components/SwipeCard'
 import MatchModal from '../../components/MatchModal'
 import OfferDetailModal from '../../components/OfferDetailModal'
 import ApplicationToast from '../../components/ApplicationToast'
 import { useApplications } from '../../context/ApplicationContext'
 import { useAuth } from '../../context/AuthContext'
-import tunisianOffers from '../../data/companies'
+import { useJobOffers } from '../../hooks/useJobOffers'
 import './StudentSwipe.css'
 
-// Use Tunisian companies data
-const mockOffers = tunisianOffers
-
 function StudentSwipe() {
-    const [offers, setOffers] = useState(mockOffers)
+    const { offers: realOffers, loading, error, swipe } = useJobOffers()
+    const [offers, setOffers] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [showMatch, setShowMatch] = useState(false)
     const [matchedOffer, setMatchedOffer] = useState(null)
@@ -22,36 +20,47 @@ function StudentSwipe() {
     const [showToast, setShowToast] = useState(false)
     const [toastCompany, setToastCompany] = useState('')
 
-    const { addApplication, hasAppliedTo } = useApplications()
+    useEffect(() => {
+        if (realOffers.length > 0) {
+            setOffers(realOffers)
+        }
+    }, [realOffers])
+
+    const { addApplication } = useApplications()
     const { user } = useAuth()
 
     const currentOffer = offers[currentIndex]
     const hasMoreOffers = currentIndex < offers.length
 
-    const handleSwipe = (direction) => {
+    const handleSwipe = async (direction) => {
         if (!currentOffer) return
 
-        setSwipeHistory([...swipeHistory, { offer: currentOffer, direction }])
+        // Optimistic UI update
+        const offerToSwipe = currentOffer
+        setSwipeHistory([...swipeHistory, { offer: offerToSwipe, direction }])
+
+        // Move to next card immediately for potential optimistic update
+        const nextIndex = currentIndex + 1
+        setCurrentIndex(nextIndex)
+
+        // Call Supabase
+        await swipe(offerToSwipe.id, direction)
 
         // On right swipe (like) or super like - send application
         if (direction === 'right' || direction === 'super') {
             // Add application (sends profile to company)
-            addApplication(currentOffer, user?.profile)
+            addApplication(offerToSwipe, user?.profile)
 
             // Show toast notification
-            setToastCompany(currentOffer.company)
+            setToastCompany(offerToSwipe.company)
             setShowToast(true)
 
             // Check if it's a match
-            if (currentOffer.hasMatched) {
-                setMatchedOffer(currentOffer)
+            if (offerToSwipe.hasMatched) {
+                setMatchedOffer(offerToSwipe)
                 setTimeout(() => setShowMatch(true), 500) // Delay match modal so toast appears first
             }
         }
-
-        setTimeout(() => {
-            setCurrentIndex(currentIndex + 1)
-        }, 300)
     }
 
     const handleUndo = () => {
@@ -62,6 +71,27 @@ function StudentSwipe() {
 
     const handleViewDetails = (offer) => {
         setSelectedOffer(offer)
+    }
+
+    if (loading) {
+        return (
+            <div className="swipe-page loading">
+                <Loader className="animate-spin text-primary" size={48} />
+                <p>Finding the best jobs for you...</p>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="swipe-page error">
+                <div className="glass-card">
+                    <h3 className="text-red-500">Oops! Something went wrong.</h3>
+                    <p>{error}</p>
+                    <button className="btn btn-primary mt-4" onClick={() => window.location.reload()}>Try Again</button>
+                </div>
+            </div>
+        )
     }
 
     return (
