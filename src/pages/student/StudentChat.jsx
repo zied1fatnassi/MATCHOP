@@ -1,55 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Send, Paperclip, Phone, Video, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Send, Paperclip, Phone, Video, MoreVertical, Loader } from 'lucide-react'
 import ChatBubble from '../../components/ChatBubble'
+import { useMessages } from '../../hooks/useMessages'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
 import './StudentChat.css'
-
-// Mock data
-const mockMatch = {
-    id: 1,
-    company: 'DataFlow Analytics',
-    logo: null,
-    title: 'Data Science Intern',
-    isOnline: true,
-}
-
-const mockMessages = [
-    {
-        id: 1,
-        text: "Hi! We're excited about your application for the Data Science Intern position!",
-        isOwn: false,
-        timestamp: '10:30 AM',
-    },
-    {
-        id: 2,
-        text: "Your background in machine learning and Python really stood out to us.",
-        isOwn: false,
-        timestamp: '10:31 AM',
-    },
-    {
-        id: 3,
-        text: "Thank you so much! I'm really excited about this opportunity.",
-        isOwn: true,
-        timestamp: '10:35 AM',
-    },
-    {
-        id: 4,
-        text: "I've been following DataFlow's work on predictive analytics and would love to contribute!",
-        isOwn: true,
-        timestamp: '10:36 AM',
-    },
-    {
-        id: 5,
-        text: "That's great to hear! Would you be available for a video interview this week?",
-        isOwn: false,
-        timestamp: '10:40 AM',
-    },
-]
 
 function StudentChat() {
     const { matchId } = useParams()
-    const [messages, setMessages] = useState(mockMessages)
+    const { user } = useAuth()
+    const { messages, sendMessage, subscribeToMessages, loading: messagesLoading } = useMessages(matchId)
     const [newMessage, setNewMessage] = useState('')
+    const [matchDetails, setMatchDetails] = useState(null)
+    const [loadingDetails, setLoadingDetails] = useState(true)
     const messagesEndRef = useRef(null)
 
     const scrollToBottom = () => {
@@ -60,19 +24,70 @@ function StudentChat() {
         scrollToBottom()
     }, [messages])
 
-    const handleSend = (e) => {
+    // Fetch match details (company info)
+    useEffect(() => {
+        const fetchMatchDetails = async () => {
+            if (!matchId) return
+
+            try {
+                // Get match info including company details
+                // Note: The 'matches' table has company_id
+                const { data: matchData, error } = await supabase
+                    .from('matches')
+                    .select(`
+                        *,
+                        companies (
+                            id, name, logo_url
+                        ),
+                        job_offers (
+                            title
+                        )
+                    `)
+                    .eq('id', matchId)
+                    .single()
+
+                if (error) throw error
+
+                setMatchDetails({
+                    id: matchData.id,
+                    company: matchData.companies?.name || 'Company',
+                    logo: matchData.companies?.logo_url,
+                    title: matchData.job_offers?.title || 'Job Offer',
+                    isOnline: false // Supabase Presence could handle this
+                })
+            } catch (err) {
+                console.error("Error fetching match:", err)
+            } finally {
+                setLoadingDetails(false)
+            }
+        }
+
+        fetchMatchDetails()
+    }, [matchId])
+
+    const handleSend = async (e) => {
         e.preventDefault()
         if (!newMessage.trim()) return
 
-        const message = {
-            id: messages.length + 1,
-            text: newMessage,
-            isOwn: true,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        }
-
-        setMessages([...messages, message])
+        await sendMessage(newMessage)
         setNewMessage('')
+    }
+
+    if (loadingDetails) {
+        return (
+            <div className="chat-page flex items-center justify-center">
+                <Loader className="animate-spin text-primary" size={40} />
+            </div>
+        )
+    }
+
+    if (!matchDetails) {
+        return (
+            <div className="chat-page flex flex-col items-center justify-center">
+                <h3>Match not found</h3>
+                <Link to="/student/matches" className="btn btn-primary mt-4">Go Back</Link>
+            </div>
+        )
     }
 
     return (
@@ -85,17 +100,17 @@ function StudentChat() {
 
                 <div className="chat-user">
                     <div className="chat-avatar">
-                        {mockMatch.logo ? (
-                            <img src={mockMatch.logo} alt={mockMatch.company} />
+                        {matchDetails.logo ? (
+                            <img src={matchDetails.logo} alt={matchDetails.company} />
                         ) : (
-                            <span>{mockMatch.company.charAt(0)}</span>
+                            <span>{matchDetails.company.charAt(0)}</span>
                         )}
-                        {mockMatch.isOnline && <span className="online-indicator" />}
+                        {matchDetails.isOnline && <span className="online-indicator" />}
                     </div>
                     <div className="chat-user-info">
-                        <h3>{mockMatch.company}</h3>
+                        <h3>{matchDetails.company}</h3>
                         <span className="status">
-                            {mockMatch.isOnline ? 'Online' : 'Offline'}
+                            {matchDetails.title}
                         </span>
                     </div>
                 </div>
@@ -121,11 +136,17 @@ function StudentChat() {
                     {messages.map(message => (
                         <ChatBubble
                             key={message.id}
-                            message={message.text}
-                            isOwn={message.isOwn}
-                            timestamp={message.timestamp}
+                            message={message.content}
+                            isOwn={message.sender_id === user?.id}
+                            timestamp={new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         />
                     ))}
+
+                    {messages.length === 0 && (
+                        <div className="text-center opacity-50 py-10">
+                            No messages yet. Start the conversation!
+                        </div>
+                    )}
 
                     <div ref={messagesEndRef} />
                 </div>

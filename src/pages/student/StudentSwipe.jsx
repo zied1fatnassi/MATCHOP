@@ -58,6 +58,17 @@ function StudentSwipe() {
             // Check if it's a match
             if (offerToSwipe.hasMatched) {
                 setMatchedOffer(offerToSwipe)
+
+                // Send email notification (fire and forget)
+                import('../../lib/email').then(({ sendMatchEmail }) => {
+                    sendMatchEmail(
+                        user?.email,
+                        user?.user_metadata?.name || 'Student',
+                        offerToSwipe.company,
+                        'Company'
+                    )
+                })
+
                 setTimeout(() => setShowMatch(true), 500) // Delay match modal so toast appears first
             }
         }

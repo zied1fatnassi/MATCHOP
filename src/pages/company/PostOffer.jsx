@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, MapPin, DollarSign, Clock, FileText, Plus, X, Send } from 'lucide-react'
+import { Briefcase, MapPin, DollarSign, Clock, FileText, Plus, X, Send, Loader } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../context/AuthContext'
+import ApplicationToast from '../../components/ApplicationToast'
 import './PostOffer.css'
 
 function PostOffer() {
     const navigate = useNavigate()
+    const { user } = useAuth()
+    const [loading, setLoading] = useState(false)
+    const [showSuccess, setShowSuccess] = useState(false)
+
     const [offer, setOffer] = useState({
         title: '',
         department: '',
@@ -30,9 +37,36 @@ function PostOffer() {
         setOffer({ ...offer, skills: offer.skills.filter(s => s !== skill) })
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        navigate('/company/candidates')
+        if (!user) return
+
+        setLoading(true)
+        try {
+            const { error } = await supabase.from('job_offers').insert({
+                company_id: user.id,
+                title: offer.title,
+                description: offer.description,
+                requirements: offer.requirements ? [offer.requirements] : [], // Storing as array for now
+                location: offer.location || 'Remote',
+                salary_min: parseInt(offer.salary.replace(/\D/g, '')) || 0, // Basic parsing
+                salary_max: parseInt(offer.salary.replace(/\D/g, '')) || 0,
+                skills: offer.skills,
+                is_active: true
+            })
+
+            if (error) throw error
+
+            setShowSuccess(true)
+            setTimeout(() => {
+                navigate('/company/candidates')
+            }, 2000)
+        } catch (error) {
+            console.error('Error posting offer:', error)
+            alert('Failed to post offer: ' + error.message)
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -161,7 +195,7 @@ function PostOffer() {
                                         <input
                                             type="text"
                                             className="input"
-                                            placeholder="e.g. $5,000/month"
+                                            placeholder="e.g. 1500"
                                             value={offer.salary}
                                             onChange={(e) => setOffer({ ...offer, salary: e.target.value })}
                                         />
@@ -219,13 +253,38 @@ function PostOffer() {
                                 </div>
                             </div>
 
-                            <button type="submit" className="btn btn-primary btn-lg w-full">
-                                <Send size={20} />
-                                Publish Opportunity
+                            <button
+                                type="submit"
+                                className="btn btn-primary btn-lg w-full"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader className="animate-spin" size={20} />
+                                        Publishing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send size={20} />
+                                        Publish Opportunity
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
                 </form>
+
+                {showSuccess && (
+                    <div className="fixed bottom-8 right-8 bg-green-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 animate-slide-up">
+                        <div className="bg-white/20 p-2 rounded-full">
+                            <Send size={20} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold">Success!</h4>
+                            <p className="text-sm opacity-90">Your opportunity has been published.</p>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )
