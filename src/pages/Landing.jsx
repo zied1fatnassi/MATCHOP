@@ -1,0 +1,241 @@
+import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { ArrowRight, Users, Briefcase, Heart, MessageCircle, Sparkles, Zap } from 'lucide-react'
+import Logo from '../components/Logo'
+import './Landing.css'
+
+/**
+ * Landing page for MtchOp
+ * Features hero section, how it works, features for students/companies, and CTA
+ */
+function Landing() {
+    const { t } = useTranslation()
+
+    return (
+        <div className="landing-page">
+            {/* Hero Section */}
+            <section className="hero">
+                <div className="hero-bg">
+                    <div className="gradient-orb orb-1"></div>
+                    <div className="gradient-orb orb-2"></div>
+                    <div className="gradient-orb orb-3"></div>
+                </div>
+
+                <div className="container hero-content">
+                    <div className="hero-logo">
+                        <Logo size="large" showText={false} animated={true} />
+                    </div>
+
+                    <div className="hero-badge animate-fade-in">
+                        <Sparkles size={16} />
+                        <span>{t('landing.badge')}</span>
+                    </div>
+
+                    <h1 className="hero-title animate-slide-up">
+                        {t('landing.heroTitle')}<br />
+                        <span className="gradient-text">{t('landing.heroHighlight')}</span>
+                    </h1>
+
+                    <p className="hero-subtitle animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                        {t('landing.heroSubtitle')}
+                    </p>
+
+                    <div className="hero-cta animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                        <Link to="/student/signup" className="btn btn-primary btn-lg">
+                            <Users size={20} />
+                            {t('landing.ctaStudent')}
+                            <ArrowRight size={20} />
+                        </Link>
+                        <Link to="/company/signup" className="btn btn-secondary btn-lg">
+                            <Briefcase size={20} />
+                            {t('landing.ctaCompany')}
+                            <ArrowRight size={20} />
+                        </Link>
+                    </div>
+
+                    <div className="hero-stats animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                        <div className="stat-item">
+                            <span className="stat-number">10K+</span>
+                            <span className="stat-label">{t('landing.statsStudents')}</span>
+                        </div>
+                        <div className="stat-divider"></div>
+                        <div className="stat-item">
+                            <span className="stat-number">500+</span>
+                            <span className="stat-label">{t('landing.statsCompanies')}</span>
+                        </div>
+                        <div className="stat-divider"></div>
+                        <div className="stat-item">
+                            <span className="stat-number">5K+</span>
+                            <span className="stat-label">{t('landing.statsMatches')}</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* How It Works */}
+            <section className="how-it-works">
+                <div className="container">
+                    <h2 className="section-title">
+                        {t('landing.howItWorks')}
+                    </h2>
+
+                    <div className="steps-grid">
+                        <div className="step-card glass-card">
+                            <div className="step-number">01</div>
+                            <div className="step-icon">
+                                <Users size={32} />
+                            </div>
+                            <h3>{t('landing.step1Title')}</h3>
+                            <p>{t('landing.step1Desc')}</p>
+                        </div>
+
+                        <div className="step-card glass-card">
+                            <div className="step-number">02</div>
+                            <div className="step-icon">
+                                <Heart size={32} />
+                            </div>
+                            <h3>{t('landing.step2Title')}</h3>
+                            <p>{t('landing.step2Desc')}</p>
+                        </div>
+
+                        <div className="step-card glass-card">
+                            <div className="step-number">03</div>
+                            <div className="step-icon">
+                                <MessageCircle size={32} />
+                            </div>
+                            <h3>{t('landing.step3Title')}</h3>
+                            <p>{t('landing.step3Desc')}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features */}
+            <section className="features">
+                <div className="container">
+                    <div className="features-grid">
+                        <div className="feature-content">
+                            <span className="feature-badge">
+                                <Zap size={16} />
+                                {t('landing.forStudents')}
+                            </span>
+                            <h2>{t('landing.forStudentsTitle')}</h2>
+                            <p>{t('landing.forStudentsDesc')}</p>
+                            <ul className="feature-list">
+                                <li>✨ Personalized job recommendations</li>
+                                <li>✨ Direct access to hiring managers</li>
+                                <li>✨ Real-time application status</li>
+                                <li>✨ Interview scheduling built-in</li>
+                            </ul>
+                            <Link to="/student/signup" className="btn btn-primary">
+                                Get Started Free
+                                <ArrowRight size={18} />
+                            </Link>
+                        </div>
+
+                        <div className="feature-visual">
+                            <div className="founder-profile">
+                                <img
+                                    src="/founder.jpg"
+                                    alt="Zied Fatnassi - Founder"
+                                    className="founder-image floating"
+                                />
+                                <div className="founder-info">
+                                    <h3 className="founder-name">Zied Fatnassi</h3>
+                                    <p className="founder-title">Founder & Developer of MatchOp</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="features-grid reverse">
+                        <div className="feature-visual">
+                            <div className="dashboard-mockup">
+                                <div className="mock-header">
+                                    <span className="mock-title">Candidate Pipeline</span>
+                                </div>
+                                <div className="mock-candidates">
+                                    <div className="mock-candidate">
+                                        <div className="mock-avatar">👨‍💻</div>
+                                        <div className="mock-info">
+                                            <span>Alex Johnson</span>
+                                            <span className="match-score">95% Match</span>
+                                        </div>
+                                    </div>
+                                    <div className="mock-candidate">
+                                        <div className="mock-avatar">👩‍💻</div>
+                                        <div className="mock-info">
+                                            <span>Sarah Chen</span>
+                                            <span className="match-score">92% Match</span>
+                                        </div>
+                                    </div>
+                                    <div className="mock-candidate">
+                                        <div className="mock-avatar">👨‍🎓</div>
+                                        <div className="mock-info">
+                                            <span>Mike Ross</span>
+                                            <span className="match-score">88% Match</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="feature-content">
+                            <span className="feature-badge company">
+                                <Briefcase size={16} />
+                                {t('landing.forCompanies')}
+                            </span>
+                            <h2>{t('landing.forCompaniesTitle')}</h2>
+                            <p>{t('landing.forCompaniesDesc')}</p>
+                            <ul className="feature-list">
+                                <li>🎯 Pre-qualified candidates</li>
+                                <li>🎯 Reduced time-to-hire</li>
+                                <li>🎯 Built-in screening tools</li>
+                                <li>🎯 Analytics dashboard</li>
+                            </ul>
+                            <Link to="/company/signup" className="btn btn-primary">
+                                Start Hiring
+                                <ArrowRight size={18} />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="cta-section">
+                <div className="container">
+                    <div className="cta-card glass-card">
+                        <h2>{t('landing.ctaTitle')}</h2>
+                        <p>{t('landing.ctaSubtitle')}</p>
+                        <div className="cta-buttons">
+                            <Link to="/student/signup" className="btn btn-primary btn-lg">
+                                {t('landing.signupStudent')}
+                            </Link>
+                            <Link to="/company/signup" className="btn btn-secondary btn-lg">
+                                {t('landing.signupCompany')}
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="footer">
+                <div className="container">
+                    <div className="footer-content">
+                        <div className="footer-logo">
+                            <Logo size="default" showText={false} />
+                        </div>
+                        <p className="footer-tagline">{t('landing.footer')}</p>
+                    </div>
+                    <div className="footer-bottom">
+                        <p>© 2024 MatchOp. All rights reserved.</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    )
+}
+
+export default Landing

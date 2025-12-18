@@ -1,0 +1,143 @@
+.swipe-page {
+    min-height: 100vh;
+    padding-top: 80px;
+    padding-bottom: var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.swipe-container {
+    width: 100%;
+    max-width: 450px;
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+.cards-stack {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.swipe-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+}
+
+.action-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-spring);
+    border: 2px solid;
+}
+
+.action-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.action-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.action-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.action-btn.undo {
+    width: 44px;
+    height: 44px;
+    background: var(--glass-bg);
+    border-color: var(--gray-500);
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.action-btn.undo:hover:not(:disabled) {
+    color: white;
+    border-color: white;
+}
+
+.action-btn.pass {
+    width: 64px;
+    height: 64px;
+    background: var(--glass-bg);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.action-btn.pass:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.action-btn.super-like {
+    background: var(--glass-bg);
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.action-btn.super-like:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.action-btn.like {
+    width: 64px;
+    height: 64px;
+    background: var(--glass-bg);
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+}
+
+.action-btn.like:hover {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.no-more-offers {
+    text-align: center;
+    padding: var(--space-12);
+    max-width: 400px;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: var(--space-4);
+}
+
+.no-more-offers h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+}
+
+.no-more-offers p {
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: var(--space-6);
+}
+
+@media (max-width: 480px) {
+    .swipe-container {
+        padding: var(--space-2);
+    }
+
+    .cards-stack {
+        height: 480px;
+    }
+
+    .action-btn.pass,
+    .action-btn.like {
+        width: 56px;
+        height: 56px;
+    }
+}

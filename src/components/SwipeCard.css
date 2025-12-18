@@ -1,0 +1,161 @@
+.swipe-card {
+    position: absolute;
+    width: 100%;
+    max-width: 400px;
+    background: var(--card-gradient);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    user-select: none;
+    box-shadow: var(--glass-shadow);
+}
+
+.swipe-card.dragging {
+    cursor: grabbing;
+}
+
+.swipe-indicator {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: var(--space-3) var(--space-6);
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    border-radius: var(--radius-lg);
+    border: 4px solid;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+}
+
+.swipe-indicator.like {
+    right: var(--space-6);
+    color: var(--accent-green);
+    border-color: var(--accent-green);
+    transform: translateY(-50%) rotate(15deg);
+}
+
+.swipe-indicator.pass {
+    right: var(--space-6);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+/* View Details Hint */
+.view-details-hint {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--font-size-xs);
+    opacity: 0.7;
+    transition: all var(--transition-fast);
+    z-index: 5;
+}
+
+.swipe-card:hover .view-details-hint {
+    opacity: 1;
+    background: rgba(33, 150, 243, 0.2);
+    color: var(--primary-light);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, transparent 100%);
+}
+
+.company-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-lg);
+    background: var(--accent-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    overflow: hidden;
+}
+
+.company-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.company-info {
+    flex: 1;
+}
+
+.company-name {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.card-body {
+    padding: var(--space-6);
+    padding-top: 0;
+}
+
+.job-title {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    margin-bottom: var(--space-3);
+    line-height: 1.3;
+}
+
+.job-description {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-4);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.job-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: var(--font-size-sm);
+}
+
+.detail-item svg {
+    color: var(--primary-light);
+}
+
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.skill-tag {
+    padding: var(--space-1) var(--space-3);
+    background: rgba(33, 150, 243, 0.15);
+    color: var(--primary-light);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    border-radius: var(--radius-full);
+}
