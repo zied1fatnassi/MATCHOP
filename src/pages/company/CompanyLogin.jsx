@@ -1,50 +1,73 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Mail, Lock, ArrowRight, Building2 } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Building2, Loader2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { validateEmail, getAuthErrorMessage } from '../../lib/validation'
 import '../student/StudentSignup.css'
 
 /**
  * Company Login Page
- * Requires email and password to sign in
+ * Secure authentication using Supabase Auth
  */
 function CompanyLogin() {
     const navigate = useNavigate()
-    const { login } = useAuth()
+    const { signIn, isLoading: authLoading } = useAuth()
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     })
     const [error, setError] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
         setError('')
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
+        setError('')
 
-        // Basic validation
-        if (!formData.email || !formData.password) {
-            setError('Please fill in all fields')
+        // Validate email
+        const emailValidation = validateEmail(formData.email)
+        if (!emailValidation.valid) {
+            setError(emailValidation.error)
             return
         }
 
-        if (!formData.email.includes('@')) {
-            setError('Please enter a valid email address')
+        // Check password is provided
+        if (!formData.password) {
+            setError('Please enter your password')
             return
         }
 
-        if (formData.password.length < 6) {
-            setError('Password must be at least 6 characters')
-            return
-        }
+        setIsLoading(true)
 
-        // In a real app, this would validate against a backend
-        login('company', { email: formData.email })
-        navigate('/company/candidates')
+        try {
+            const { data, error: signInError } = await signIn(formData.email, formData.password)
+
+            if (signInError) {
+                setError(getAuthErrorMessage(signInError))
+                return
+            }
+
+            if (data?.user) {
+                // Check if user is a company
+                const userType = data.user.user_metadata?.type
+                if (userType === 'student') {
+                    setError('This account is registered as a student. Please use the student login.')
+                    return
+                }
+                navigate('/company/candidates')
+            }
+        } catch (err) {
+            setError(getAuthErrorMessage(err))
+        } finally {
+            setIsLoading(false)
+        }
     }
+
+    const isSubmitDisabled = isLoading || authLoading || !formData.email || !formData.password
 
     return (
         <div className="auth-page">
@@ -84,7 +107,9 @@ function CompanyLogin() {
                                         placeholder="you@company.com"
                                         value={formData.email}
                                         onChange={handleChange}
+                                        disabled={isLoading}
                                         required
+                                        autoComplete="email"
                                     />
                                 </div>
                             </div>
@@ -100,19 +125,34 @@ function CompanyLogin() {
                                         placeholder="••••••••"
                                         value={formData.password}
                                         onChange={handleChange}
+                                        disabled={isLoading}
                                         required
+                                        autoComplete="current-password"
                                     />
                                 </div>
                             </div>
 
                             <div className="forgot-password">
-                                <a href="#">Forgot password?</a>
+                                <Link to="/forgot-password">Forgot password?</Link>
                             </div>
                         </div>
 
-                        <button type="submit" className="btn btn-primary btn-lg w-full">
-                            Sign In
-                            <ArrowRight size={20} />
+                        <button
+                            type="submit"
+                            className="btn btn-primary btn-lg w-full"
+                            disabled={isSubmitDisabled}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 size={20} className="spinner" />
+                                    Signing In...
+                                </>
+                            ) : (
+                                <>
+                                    Sign In
+                                    <ArrowRight size={20} />
+                                </>
+                            )}
                         </button>
                     </form>
                 </div>
@@ -122,3 +162,4 @@ function CompanyLogin() {
 }
 
 export default CompanyLogin
+

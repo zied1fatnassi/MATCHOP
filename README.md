@@ -120,6 +120,56 @@ See `.env.example` for full list.
 
 ---
 
+## 🔐 Authentication
+
+MtchOp uses **Supabase Auth** for secure authentication. All authentication goes through Supabase - no demo or bypass modes.
+
+### Security Features
+
+- ✅ **Supabase Auth** - Industry-standard authentication
+- ✅ **Strong Password Policy** - 8+ chars, uppercase, lowercase, number, special char
+- ✅ **Email Verification** - Required before login
+- ✅ **Row Level Security (RLS)** - Users can only access their own data
+- ✅ **Input Validation** - Frontend + Backend validation
+- ✅ **Loading States** - Clear UI feedback during auth
+- ✅ **Error Handling** - User-friendly error messages
+
+### Password Requirements
+
+| Requirement | Description |
+|-------------|-------------|
+| Length | Minimum 8 characters |
+| Uppercase | At least 1 uppercase letter (A-Z) |
+| Lowercase | At least 1 lowercase letter (a-z) |
+| Number | At least 1 digit (0-9) |
+| Special | At least 1 special character (!@#$%^&*) |
+
+### Supabase Configuration
+
+1. **Enable Email Verification**:
+   - Go to Supabase Dashboard → Authentication → Settings
+   - Enable "Confirm email" under Email Auth
+
+2. **Set Password Requirements**:
+   - Authentication → Settings → Password Requirements
+   - Set minimum length to 8
+
+3. **Run RLS Policies**:
+   ```bash
+   # In Supabase SQL Editor, run:
+   database/rls_policies.sql
+   ```
+
+4. **Environment Variables**:
+   ```bash
+   VITE_SUPABASE_URL=your_project_url
+   VITE_SUPABASE_ANON_KEY=your_anon_key
+   ```
+
+> ⚠️ **Important**: Never expose your Supabase service role key in the frontend.
+
+---
+
 ## 📄 License
 
 MIT License
@@ -127,3 +177,4 @@ MIT License
 ---
 
 <p align="center">Made with ❤️ by the MtchOp Team</p>
+
