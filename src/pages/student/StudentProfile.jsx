@@ -1,15 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Plus, X, Save, MapPin, Briefcase, Link as LinkIcon, FileText, Globe, Palette } from 'lucide-react'
+import { Camera, Plus, X, Save, MapPin, Briefcase, Link as LinkIcon, FileText, Globe, Palette, Loader2, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useImageUpload } from '../../hooks/useImageUpload'
+import { supabase } from '../../lib/supabase'
 import './StudentProfile.css'
 
 function StudentProfile() {
     const navigate = useNavigate()
-    const { user, login } = useAuth()
+    const { user, profile: authProfile, updateProfile, isLoggedIn } = useAuth()
+    const fileInputRef = useRef(null)
+
+    const { uploadImage, deleteImage, uploading, error: uploadError } = useImageUpload(user?.id)
 
     const [profile, setProfile] = useState({
-        name: 'John Doe',
+        name: '',
         bio: '',
         location: '',
         linkedin: '',
@@ -20,19 +25,68 @@ function StudentProfile() {
         skills: [],
         experience: '',
         availability: '',
+        avatar_url: '',
     })
-    const [newSkill, setNewSkill] = useState('')
+    const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
+    const [error, setError] = useState('')
 
-    // Load profile from user context
+    // Redirect if not logged in
     useEffect(() => {
-        if (user?.profile) {
-            setProfile(prev => ({ ...prev, ...user.profile }))
+        if (!isLoggedIn && !user) {
+            navigate('/student/login')
         }
-        if (user?.name) {
-            setProfile(prev => ({ ...prev, name: user.name }))
+    }, [isLoggedIn, user, navigate])
+
+    // Load profile from auth context and database
+    useEffect(() => {
+        if (authProfile) {
+            setProfile(prev => ({
+                ...prev,
+                name: authProfile.name || '',
+                avatar_url: authProfile.avatar_url || '',
+                ...authProfile.student_profiles?.[0],
+            }))
         }
-    }, [user])
+        if (user?.user_metadata?.name) {
+            setProfile(prev => ({ ...prev, name: user.user_metadata.name }))
+        }
+    }, [authProfile, user])
+
+    // Fetch additional profile data
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (!user?.id) return
+
+            try {
+                const { data, error } = await supabase
+                    .from('student_profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single()
+
+                if (!error && data) {
+                    setProfile(prev => ({
+                        ...prev,
+                        bio: data.bio || '',
+                        location: data.location || '',
+                        skills: data.skills || [],
+                        linkedin: data.linkedin || '',
+                        github: data.github || '',
+                        portfolio: data.portfolio || '',
+                        behance: data.behance || '',
+                        cv: data.cv || '',
+                        experience: data.experience || '',
+                        availability: data.availability || '',
+                    }))
+                }
+            } catch (err) {
+                console.error('Error fetching profile:', err)
+            }
+        }
+
+        fetchProfile()
+    }, [user?.id])
 
     const availableSkills = [
         'JavaScript', 'Python', 'React', 'Node.js', 'TypeScript', 'Java',
@@ -50,20 +104,79 @@ function StudentProfile() {
         setProfile({ ...profile, skills: profile.skills.filter(s => s !== skill) })
     }
 
-    const handleSubmit = (e) => {
+    const handleImageClick = () => {
+        fileInputRef.current?.click()
+    }
+
+    const handleImageChange = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setError('')
+
+        const { url, error: imgError } = await uploadImage(file)
+
+        if (imgError) {
+            setError(imgError.message)
+            return
+        }
+
+        if (url) {
+            setProfile(prev => ({ ...prev, avatar_url: url }))
+        }
+    }
+
+    const handleRemoveImage = async () => {
+        setError('')
+        const { error: delError } = await deleteImage()
+
+        if (delError) {
+            setError(delError.message)
+            return
+        }
+
+        setProfile(prev => ({ ...prev, avatar_url: '' }))
+    }
+
+    const handleSubmit = async (e) => {
         e.preventDefault()
+        setError('')
+        setSaving(true)
 
-        // Save profile to auth context (persists to localStorage)
-        login('student', {
-            ...user,
-            name: profile.name,
-            profile: profile
-        })
+        try {
+            // Update main profile
+            await updateProfile({ name: profile.name, avatar_url: profile.avatar_url })
 
-        setSaved(true)
-        setTimeout(() => {
-            navigate('/student/swipe')
-        }, 1000)
+            // Update student profile
+            const { error: studentError } = await supabase
+                .from('student_profiles')
+                .upsert({
+                    id: user.id,
+                    bio: profile.bio,
+                    location: profile.location,
+                    skills: profile.skills,
+                    linkedin: profile.linkedin,
+                    github: profile.github,
+                    portfolio: profile.portfolio,
+                    behance: profile.behance,
+                    cv: profile.cv,
+                    experience: profile.experience,
+                    availability: profile.availability,
+                })
+
+            if (studentError) {
+                throw studentError
+            }
+
+            setSaved(true)
+            setTimeout(() => {
+                navigate('/student/swipe')
+            }, 1000)
+        } catch (err) {
+            setError(err.message || 'Failed to save profile')
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
@@ -74,20 +187,52 @@ function StudentProfile() {
                     <p>Your profile will be sent to companies when you apply</p>
                 </div>
 
+                {(error || uploadError) && (
+                    <div className="profile-error">
+                        {error || uploadError?.message}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="profile-form glass-card">
                     {/* Profile Photo */}
                     <div className="photo-section">
-                        <div className="photo-upload">
-                            <div className="photo-placeholder">
-                                <Camera size={32} />
-                            </div>
-                            <button type="button" className="photo-edit-btn">
-                                <Plus size={16} />
+                        <div className="photo-upload" onClick={handleImageClick}>
+                            {profile.avatar_url ? (
+                                <img
+                                    src={profile.avatar_url}
+                                    alt="Profile"
+                                    className="photo-preview"
+                                />
+                            ) : (
+                                <div className="photo-placeholder">
+                                    {uploading ? <Loader2 size={32} className="spinner" /> : <Camera size={32} />}
+                                </div>
+                            )}
+                            <button type="button" className="photo-edit-btn" disabled={uploading}>
+                                {uploading ? <Loader2 size={16} className="spinner" /> : <Plus size={16} />}
                             </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                onChange={handleImageChange}
+                                style={{ display: 'none' }}
+                            />
                         </div>
                         <div className="photo-info">
-                            <h3>{profile.name}</h3>
+                            <h3>{profile.name || 'Your Name'}</h3>
                             <p>Add a professional photo to stand out</p>
+                            {profile.avatar_url && (
+                                <button
+                                    type="button"
+                                    className="remove-photo-btn"
+                                    onClick={handleRemoveImage}
+                                    disabled={uploading}
+                                >
+                                    <Trash2 size={14} />
+                                    Remove photo
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -279,9 +424,18 @@ function StudentProfile() {
 
                     {/* Submit */}
                     <div className="form-actions">
-                        <button type="submit" className={`btn btn-primary btn-lg ${saved ? 'saved' : ''}`}>
+                        <button
+                            type="submit"
+                            className={`btn btn-primary btn-lg ${saved ? 'saved' : ''}`}
+                            disabled={saving || uploading}
+                        >
                             {saved ? (
                                 <>✓ Saved!</>
+                            ) : saving ? (
+                                <>
+                                    <Loader2 size={20} className="spinner" />
+                                    Saving...
+                                </>
                             ) : (
                                 <>
                                     <Save size={20} />
@@ -297,4 +451,3 @@ function StudentProfile() {
 }
 
 export default StudentProfile
-
