@@ -1,5 +1,5 @@
 /**
- * TypeScript type definitions for MtchOp entities
+ * TypeScript type definitions for MatchOp entities
  * These can be used with JSDoc for type hints in JavaScript files
  */
 

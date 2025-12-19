@@ -1,15 +1,15 @@
-# MtchOp 🎯
+# MatchOp 🎯
 
 **Match Your Opportunity** - A modern student-company matching platform built with React.
 
-![MtchOp](https://img.shields.io/badge/MtchOp-v1.0.0-6366f1)
+![MatchOp](https://img.shields.io/badge/MatchOp-v1.0.0-6366f1)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![Vite](https://img.shields.io/badge/Vite-7-646CFF)
 ![i18n](https://img.shields.io/badge/i18n-EN%20%7C%20FR-green)
 
 ## 📖 About
 
-MtchOp connects students with companies through an intuitive swipe-based matching experience. Students can discover internships and job opportunities, while companies can find exceptional talent.
+MatchOp connects students with companies through an intuitive swipe-based matching experience. Students can discover internships and job opportunities, while companies can find exceptional talent.
 
 ### Key Features
 
@@ -46,8 +46,8 @@ MtchOp connects students with companies through an intuitive swipe-based matchin
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/mtchop.git
-   cd mtchop
+   git clone https://github.com/zied1fatnassi/MATCHOP.git
+   cd MATCHOP
    ```
 
 2. **Install dependencies**
@@ -122,7 +122,7 @@ See `.env.example` for full list.
 
 ## 🔐 Authentication
 
-MtchOp uses **Supabase Auth** for secure authentication. All authentication goes through Supabase - no demo or bypass modes.
+MatchOp uses **Supabase Auth** for secure authentication. All authentication goes through Supabase - no demo or bypass modes.
 
 ### Security Features
 
@@ -176,5 +176,5 @@ MIT License
 
 ---
 
-<p align="center">Made with ❤️ by the MtchOp Team</p>
+<p align="center">Made with ❤️ by the MatchOp Team</p>
 

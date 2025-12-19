@@ -5,7 +5,7 @@ import Logo from '../components/Logo'
 import './Landing.css'
 
 /**
- * Landing page for MtchOp
+ * Landing page for MatchOp
  * Features hero section, how it works, features for students/companies, and CTA
  */
 function Landing() {
