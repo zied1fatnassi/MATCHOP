@@ -1,24 +1,49 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+
+// Simple in-memory cache for matches (separate for student/company)
+const matchesCache = {
+    student: { data: null, timestamp: 0 },
+    company: { data: null, timestamp: 0 },
+}
+const CACHE_TTL = 30000 // 30 seconds
 
 /**
  * Hook for fetching and managing matches
  * Works for both students and companies
+ * Implements caching with stale-while-revalidate pattern
  */
 export function useMatches() {
     const [matches, setMatches] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const { user, profile, isStudent, isCompany } = useAuth()
+    const isMounted = useRef(true)
 
     useEffect(() => {
-        if (user && profile) {
-            fetchMatches()
-        }
-    }, [user, profile])
+        isMounted.current = true
+        return () => { isMounted.current = false }
+    }, [])
 
-    const fetchMatches = async () => {
+    const fetchMatches = useCallback(async (forceRefresh = false) => {
+        if (!user || !profile) {
+            setLoading(false)
+            return
+        }
+
+        const cacheKey = isStudent ? 'student' : 'company'
+        const cache = matchesCache[cacheKey]
+        const now = Date.now()
+        const cacheValid = cache.data && (now - cache.timestamp) < CACHE_TTL
+
+        // Return cached data immediately (stale-while-revalidate)
+        if (cacheValid && !forceRefresh) {
+            setMatches(cache.data)
+            setLoading(false)
+            return
+        }
+
         setLoading(true)
         setError(null)
 
@@ -48,22 +73,36 @@ export function useMatches() {
             const { data, error: fetchError } = await query
 
             if (fetchError) {
-                // Table might not exist yet
                 console.log('Matches table may not exist yet')
-                setMatches([])
+                if (isMounted.current) {
+                    setMatches([])
+                }
                 return
             }
 
-            setMatches(data || [])
-        } catch (err) {
-            setError(err.message)
-            setMatches([])
-        } finally {
-            setLoading(false)
-        }
-    }
+            // Update cache
+            matchesCache[cacheKey] = { data: data || [], timestamp: now }
 
-    const archiveMatch = async (matchId) => {
+            if (isMounted.current) {
+                setMatches(data || [])
+            }
+        } catch (err) {
+            if (isMounted.current) {
+                setError(err.message)
+                setMatches([])
+            }
+        } finally {
+            if (isMounted.current) {
+                setLoading(false)
+            }
+        }
+    }, [user, profile, isStudent, isCompany])
+
+    useEffect(() => {
+        fetchMatches()
+    }, [fetchMatches])
+
+    const archiveMatch = useCallback(async (matchId) => {
         const { error } = await supabase
             .from('matches')
             .update({ status: 'archived' })
@@ -71,12 +110,22 @@ export function useMatches() {
 
         if (!error) {
             setMatches(prev => prev.filter(m => m.id !== matchId))
+            // Invalidate cache
+            const cacheKey = isStudent ? 'student' : 'company'
+            matchesCache[cacheKey].timestamp = 0
         }
 
         return { error }
-    }
+    }, [isStudent])
 
-    return { matches, loading, error, refresh: fetchMatches, archiveMatch }
+    return {
+        matches,
+        loading,
+        error,
+        refresh: () => fetchMatches(true),
+        archiveMatch
+    }
 }
 
 export default useMatches
+

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 /**
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
         return () => subscription.unsubscribe()
     }, [])
 
-    const fetchProfile = async (userId) => {
+    const fetchProfile = useCallback(async (userId) => {
         try {
             const { data, error } = await supabase
                 .from('profiles')
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
         } catch (err) {
             console.error('Error fetching profile:', err)
         }
-    }
+    }, [])
 
     const signUp = async (email, password, userType, userData = {}) => {
         const { data, error } = await supabase.auth.signUp({
@@ -138,7 +138,7 @@ export function AuthProvider({ children }) {
         }
     }
 
-    const updateProfile = async (updates) => {
+    const updateProfile = useCallback(async (updates) => {
         if (!user) return { error: 'Not authenticated' }
 
         const { error } = await supabase
@@ -151,9 +151,10 @@ export function AuthProvider({ children }) {
         }
 
         return { error }
-    }
+    }, [user])
 
-    const value = {
+    // Memoize context value to prevent unnecessary re-renders
+    const value = useMemo(() => ({
         user,
         profile,
         isLoggedIn: !!user,
@@ -170,7 +171,7 @@ export function AuthProvider({ children }) {
         // Profile methods
         updateProfile,
         refreshProfile: () => user && fetchProfile(user.id)
-    }
+    }), [user, profile, isLoading, signUp, signIn, signOut, login, logout, updateProfile, fetchProfile])
 
     return (
         <AuthContext.Provider value={value}>

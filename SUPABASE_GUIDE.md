@@ -30,7 +30,7 @@ A complete step-by-step walkthrough for integrating Supabase backend into your M
 1. Click "New Project"
 2. Fill in details:
    - **Name**: `matchop`
-   - **Database Password**: Generate a strong password (save it!)
+   - **Database Password**: tbrvecTBRVEC42
    - **Region**: Choose closest to Tunisia (eu-central-1 recommended)
 3. Click "Create new project"
 4. Wait 2-3 minutes for setup
@@ -38,8 +38,8 @@ A complete step-by-step walkthrough for integrating Supabase backend into your M
 ### Step 1.3: Get API Keys
 1. Go to **Project Settings** → **API**
 2. Copy these values:
-   - **Project URL**: `https://xxxxx.supabase.co`
-   - **anon public key**: `eyJhbGci...`
+   - **Project URL**: [https://supabase.com/dashboard/project/kedqldpdvycbnznejbbl](https://supabase.com/dashboard/project/kedqldpdvycbnznejbbl)
+   - **anon public key**: [eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlZHFsZHBkdnljYm56bmVqYmJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNzI2OTEsImV4cCI6MjA4MTY0ODY5MX0.vCBQy38Nh4-MbHLKu68ki1EVCNB72f8Q64-lnixcmeE](https://supabase.com/dashboard/project/kedqldpdvycbnznejbbl)
 
 ---
 

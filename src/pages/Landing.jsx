@@ -139,6 +139,10 @@ function Landing() {
                                     src="/founder.jpg"
                                     alt="Zied Fatnassi - Founder"
                                     className="founder-image floating"
+                                    loading="lazy"
+                                    decoding="async"
+                                    width="280"
+                                    height="280"
                                 />
                                 <div className="founder-info">
                                     <h3 className="founder-name">Zied Fatnassi</h3>

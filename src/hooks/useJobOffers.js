@@ -1,24 +1,52 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+
+// Simple in-memory cache for job offers
+const offersCache = {
+    data: null,
+    timestamp: 0,
+    swipedIds: new Set(),
+}
+const CACHE_TTL = 60000 // 60 seconds
 
 /**
  * Hook for fetching and managing job offers
  * Filters out already-swiped offers and provides swipe functionality
+ * Implements caching with stale-while-revalidate pattern
  */
 export function useJobOffers() {
     const [offers, setOffers] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const { user, profile } = useAuth()
+    const isMounted = useRef(true)
 
     useEffect(() => {
-        if (user && profile?.type === 'student') {
-            fetchOffers()
-        }
-    }, [user, profile])
+        isMounted.current = true
+        return () => { isMounted.current = false }
+    }, [])
 
-    const fetchOffers = async () => {
+    const fetchOffers = useCallback(async (forceRefresh = false) => {
+        if (!user || profile?.type !== 'student') {
+            setLoading(false)
+            return
+        }
+
+        // Check cache first (stale-while-revalidate)
+        const now = Date.now()
+        const cacheValid = offersCache.data && (now - offersCache.timestamp) < CACHE_TTL
+
+        if (cacheValid && !forceRefresh) {
+            // Return cached data immediately
+            const cachedOffers = offersCache.data.filter(
+                o => !offersCache.swipedIds.has(o.id)
+            )
+            setOffers(cachedOffers)
+            setLoading(false)
+            return
+        }
+
         setLoading(true)
         setError(null)
 
@@ -33,9 +61,11 @@ export function useJobOffers() {
                     .eq('student_id', user.id)
 
                 swipedOfferIds = swipedData?.map(s => s.offer_id) || []
+                // Update swiped IDs cache
+                offersCache.swipedIds = new Set(swipedOfferIds)
             }
 
-            let query = supabase
+            const { data, error: fetchError } = await supabase
                 .from('job_offers')
                 .select(`
                     *,
@@ -46,35 +76,52 @@ export function useJobOffers() {
                 .eq('is_active', true)
                 .order('created_at', { ascending: false })
 
-            const { data, error: fetchError } = await query
-
             if (fetchError) {
-                setError(fetchError.message)
+                if (isMounted.current) {
+                    setError(fetchError.message)
+                }
                 return
             }
 
-            // Filter out swiped offers and transform data
-            const filteredOffers = (data || [])
-                .filter(offer => !swipedOfferIds.includes(offer.id))
-                .map(offer => ({
-                    ...offer,
-                    company: offer.companies?.name || 'Unknown Company',
-                    companyLogo: offer.companies?.logo_url,
-                    salary: offer.salary_min && offer.salary_max
-                        ? `${offer.salary_min}-${offer.salary_max} ${offer.salary_currency || 'TND'}/month`
-                        : 'Competitive',
-                    hasMatched: Math.random() > 0.7 // For demo purposes
-                }))
+            // Transform data once
+            const transformedOffers = (data || []).map(offer => ({
+                ...offer,
+                company: offer.companies?.name || 'Unknown Company',
+                companyLogo: offer.companies?.logo_url,
+                salary: offer.salary_min && offer.salary_max
+                    ? `${offer.salary_min}-${offer.salary_max} ${offer.salary_currency || 'TND'}/month`
+                    : 'Competitive',
+                hasMatched: Math.random() > 0.7
+            }))
 
-            setOffers(filteredOffers)
+            // Update cache
+            offersCache.data = transformedOffers
+            offersCache.timestamp = now
+
+            // Filter out swiped offers
+            const filteredOffers = transformedOffers.filter(
+                offer => !swipedOfferIds.includes(offer.id)
+            )
+
+            if (isMounted.current) {
+                setOffers(filteredOffers)
+            }
         } catch (err) {
-            setError(err.message)
+            if (isMounted.current) {
+                setError(err.message)
+            }
         } finally {
-            setLoading(false)
+            if (isMounted.current) {
+                setLoading(false)
+            }
         }
-    }
+    }, [user, profile])
 
-    const swipe = async (offerId, direction) => {
+    useEffect(() => {
+        fetchOffers()
+    }, [fetchOffers])
+
+    const swipe = useCallback(async (offerId, direction) => {
         if (!user?.id) return { error: 'Not authenticated' }
 
         try {
@@ -87,20 +134,27 @@ export function useJobOffers() {
                 })
 
             if (swipeError) {
-                // If table doesn't exist yet, just update local state
                 console.log('Swipe recorded locally (table may not exist yet)')
             }
 
-            // Remove offer from list regardless
+            // Update cache and local state
+            offersCache.swipedIds.add(offerId)
             setOffers(prev => prev.filter(o => o.id !== offerId))
 
             return { error: null }
         } catch (err) {
             return { error: err.message }
         }
-    }
+    }, [user])
 
-    return { offers, loading, error, swipe, refresh: fetchOffers }
+    return {
+        offers,
+        loading,
+        error,
+        swipe,
+        refresh: () => fetchOffers(true)
+    }
 }
 
 export default useJobOffers
+
