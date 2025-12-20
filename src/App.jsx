@@ -7,6 +7,8 @@ import AuthToast from './components/AuthToast'
 // Lazy load all page components for code splitting
 // This reduces initial bundle size by ~60-70%
 const Landing = lazy(() => import('./pages/Landing'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
 // Student pages
 const StudentSignup = lazy(() => import('./pages/student/StudentSignup'))
@@ -147,6 +149,10 @@ function App() {
       <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           <Route path="/" element={<Landing />} />
+
+          {/* Auth Routes */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Student Routes */}
           <Route path="/student/signup" element={<StudentSignup />} />
