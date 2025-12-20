@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, Eye, EyeOff, CheckCircle, Loader2, KeyRound, AlertCircle } from 'lucide-react'
+import { Lock, Eye, EyeOff, CheckCircle, Loader2, KeyRound } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { validatePassword, getAuthErrorMessage } from '../lib/validation'
 import '../pages/student/StudentSignup.css'
 
 /**
  * Reset Password Page
- * Allows users to set a new password after clicking the reset link
+ * Shows password form directly - Supabase handles session from URL hash automatically
  */
 function ResetPassword() {
     const navigate = useNavigate()
@@ -17,53 +17,6 @@ function ResetPassword() {
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
-    const [isReady, setIsReady] = useState(false)
-    const [sessionError, setSessionError] = useState(false)
-    const hasCheckedSession = useRef(false)
-
-    // Check if user has a valid password recovery session
-    useEffect(() => {
-        // Only run once
-        if (hasCheckedSession.current) return
-        hasCheckedSession.current = true
-
-        const handleRecovery = async () => {
-            // Give Supabase time to process the hash
-            await new Promise(resolve => setTimeout(resolve, 500))
-
-            // Check for PASSWORD_RECOVERY event
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'PASSWORD_RECOVERY') {
-                    // Clean up the URL hash
-                    window.history.replaceState(null, '', window.location.pathname)
-                    setIsReady(true)
-                    return
-                }
-
-                if (event === 'SIGNED_IN' && session) {
-                    setIsReady(true)
-                    return
-                }
-            })
-
-            // Also check current session
-            const { data: { session } } = await supabase.auth.getSession()
-            if (session) {
-                setIsReady(true)
-            } else {
-                // Wait a bit more for the auth state change
-                setTimeout(() => {
-                    if (!isReady) {
-                        setSessionError(true)
-                    }
-                }, 2000)
-            }
-
-            return () => subscription.unsubscribe()
-        }
-
-        handleRecovery()
-    }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -90,7 +43,12 @@ function ResetPassword() {
             })
 
             if (updateError) {
-                setError(getAuthErrorMessage(updateError))
+                // Handle specific errors
+                if (updateError.message.includes('session')) {
+                    setError('Your reset link has expired. Please request a new one.')
+                } else {
+                    setError(getAuthErrorMessage(updateError))
+                }
                 return
             }
 
@@ -125,63 +83,6 @@ function ResetPassword() {
     }
 
     const passwordStrength = getPasswordStrength()
-
-    // Session error - link expired or invalid
-    if (sessionError) {
-        return (
-            <div className="auth-page">
-                <div className="auth-container login-container">
-                    <div className="auth-visual">
-                        <div className="visual-content">
-                            <div className="visual-icon">
-                                <AlertCircle size={64} />
-                            </div>
-                            <h2>Invalid Link</h2>
-                            <p>This password reset link is invalid or expired</p>
-                        </div>
-                    </div>
-
-                    <div className="auth-form-container">
-                        <div className="auth-header">
-                            <h1>Link Expired</h1>
-                            <p>Please request a new password reset link</p>
-                        </div>
-
-                        <div className="auth-error" style={{ marginTop: '2rem' }}>
-                            The password reset link has expired or is invalid.
-                            Please request a new one.
-                        </div>
-
-                        <button
-                            onClick={() => navigate('/forgot-password')}
-                            className="btn btn-primary btn-lg w-full"
-                            style={{ marginTop: '2rem' }}
-                        >
-                            Request New Link
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
-    // Loading session check
-    if (!isReady && !sessionError) {
-        return (
-            <div className="auth-page">
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', gap: '1rem' }}>
-                    <Loader2 size={48} className="spinner" style={{ color: 'white', animation: 'spin 1s linear infinite' }} />
-                    <p style={{ color: 'white' }}>Verifying your reset link...</p>
-                    <style>{`
-                        @keyframes spin {
-                            from { transform: rotate(0deg); }
-                            to { transform: rotate(360deg); }
-                        }
-                    `}</style>
-                </div>
-            </div>
-        )
-    }
 
     // Success state
     if (isSuccess) {
@@ -245,8 +146,17 @@ function ResetPassword() {
                     </div>
 
                     {error && (
-                        <div className="auth-error">
+                        <div className="auth-error" style={{ marginBottom: '1rem' }}>
                             {error}
+                            {error.includes('expired') && (
+                                <button
+                                    onClick={() => navigate('/forgot-password')}
+                                    className="btn btn-secondary"
+                                    style={{ marginTop: '1rem', width: '100%' }}
+                                >
+                                    Request New Link
+                                </button>
+                            )}
                         </div>
                     )}
 
@@ -338,12 +248,21 @@ function ResetPassword() {
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 size={20} className="spinner" />
+                                    <Loader2 size={20} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
                                     Updating...
                                 </>
                             ) : (
                                 'Update Password'
                             )}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => navigate('/student/login')}
+                            className="btn btn-secondary w-full"
+                            style={{ marginTop: '1rem' }}
+                        >
+                            Back to Sign In
                         </button>
                     </form>
                 </div>
