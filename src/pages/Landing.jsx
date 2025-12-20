@@ -26,21 +26,21 @@ function Landing() {
                         <Logo size="large" showText={false} animated={true} />
                     </div>
 
-                    <div className="hero-badge animate-fade-in">
+                    <div className="hero-badge">
                         <Sparkles size={16} />
                         <span>{t('landing.badge')}</span>
                     </div>
 
-                    <h1 className="hero-title animate-slide-up">
+                    <h1 className="hero-title">
                         {t('landing.heroTitle')}<br />
                         <span className="gradient-text">{t('landing.heroHighlight')}</span>
                     </h1>
 
-                    <p className="hero-subtitle animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                    <p className="hero-subtitle">
                         {t('landing.heroSubtitle')}
                     </p>
 
-                    <div className="hero-cta animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                    <div className="hero-cta">
                         <Link to="/student/signup" className="btn btn-primary btn-lg">
                             <Users size={20} />
                             {t('landing.ctaStudent')}
@@ -53,7 +53,7 @@ function Landing() {
                         </Link>
                     </div>
 
-                    <div className="hero-stats animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                    <div className="hero-stats">
                         <div className="stat-item">
                             <span className="stat-number">10K+</span>
                             <span className="stat-label">{t('landing.statsStudents')}</span>
