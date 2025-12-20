@@ -86,34 +86,12 @@ export function useJobOffers() {
                 offersCache.swipedIds = new Set(swipedOfferIds)
             }
 
-            // STEP 2: Get active job offers with company info (name is in profiles, not companies)
-            console.log('[useJobOffers] Querying job_offers with companies join...')
+            // STEP 2: Get active job offers from the view (pre-joined with companies and profiles)
+            console.log('[useJobOffers] Querying job_offers_with_company view...')
 
             const offersResult = await supabase
-                .from('job_offers')
-                .select(`
-                    id,
-                    title,
-                    description,
-                    location,
-                    salary_min,
-                    salary_max,
-                    salary_currency,
-                    skills,
-                    requirements,
-                    is_active,
-                    company_id,
-                    created_at,
-                    companies (
-                        id,
-                        logo_url,
-                        sector,
-                        location,
-                        website
-                    )
-                `)
-                .eq('is_active', true)
-                .order('created_at', { ascending: false })
+                .from('job_offers_with_company')
+                .select('*')
 
             console.log('[useJobOffers] Job offers query result:', {
                 data: offersResult.data,
@@ -131,29 +109,11 @@ export function useJobOffers() {
                 return
             }
 
-            // STEP 3: Get company names from profiles table (companies.name doesn't exist, name is in profiles)
-            const companyIds = [...new Set((offersResult.data || []).map(o => o.company_id).filter(Boolean))]
-            let companyNames = {}
-
-            if (companyIds.length > 0) {
-                const { data: profilesData } = await supabase
-                    .from('profiles')
-                    .select('id, name, avatar_url')
-                    .in('id', companyIds)
-
-                if (profilesData) {
-                    companyNames = profilesData.reduce((acc, p) => {
-                        acc[p.id] = { name: p.name, avatar_url: p.avatar_url }
-                        return acc
-                    }, {})
-                }
-            }
-
-            // Transform and filter offers
+            // Transform offers (view already has all data pre-joined)
             const transformedOffers = (offersResult.data || []).map(offer => ({
                 ...offer,
-                company: companyNames[offer.company_id]?.name || 'Unknown Company',
-                companyLogo: offer.companies?.logo_url || companyNames[offer.company_id]?.avatar_url,
+                company: offer.company_name || 'Unknown Company',
+                companyLogo: offer.logo_url || offer.avatar_url,
                 salary: offer.salary_min && offer.salary_max
                     ? `${offer.salary_min}-${offer.salary_max} ${offer.salary_currency || 'TND'}/month`
                     : 'Competitive',
