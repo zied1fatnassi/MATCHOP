@@ -75,11 +75,12 @@ export function useMatches() {
                     *,
                     job_offers (
                         id, title, description, location,
-                        companies (id, name, logo_url, sector)
+                        companies:company_id (
+                            id, name, logo_url, sector
+                        )
                     ),
                     student_profiles (
-                        id, bio, skills,
-                        profiles:id (name, avatar_url, email)
+                        id, bio, skills
                     )
                 `)
                 .eq('status', 'active')

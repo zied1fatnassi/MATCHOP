@@ -31,12 +31,12 @@ function StudentChat() {
 
             try {
                 // Get match info including company details
-                // Note: The 'matches' table has company_id
+                // Use companies:company_id to specify FK relationship
                 const { data: matchData, error } = await supabase
                     .from('matches')
                     .select(`
                         *,
-                        companies (
+                        companies:company_id (
                             id, name, logo_url
                         ),
                         job_offers (
@@ -53,7 +53,7 @@ function StudentChat() {
                     company: matchData.companies?.name || 'Company',
                     logo: matchData.companies?.logo_url,
                     title: matchData.job_offers?.title || 'Job Offer',
-                    isOnline: false // Supabase Presence could handle this
+                    isOnline: false
                 })
             } catch (err) {
                 console.error("Error fetching match:", err)

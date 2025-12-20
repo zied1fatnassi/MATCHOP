@@ -87,14 +87,31 @@ export function useJobOffers() {
             }
 
             // STEP 2: Get active job offers with company info
+            // Use companies:company_id syntax to specify the FK relationship explicitly
             console.log('[useJobOffers] Querying job_offers with companies join...')
 
             const offersResult = await supabase
                 .from('job_offers')
                 .select(`
-                    *,
-                    companies (
-                        id, name, logo_url, sector, location, website
+                    id,
+                    title,
+                    description,
+                    location,
+                    salary_min,
+                    salary_max,
+                    salary_currency,
+                    skills,
+                    requirements,
+                    is_active,
+                    company_id,
+                    created_at,
+                    companies:company_id (
+                        id,
+                        name,
+                        logo_url,
+                        sector,
+                        location,
+                        website
                     )
                 `)
                 .eq('is_active', true)
