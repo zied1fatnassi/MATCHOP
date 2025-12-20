@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import LoadingScreen from './components/LoadingScreen'
+import SpeedInsights from './components/SpeedInsights'
 
 // Lazy load all page components for code splitting
 // This reduces initial bundle size by ~60-70%
@@ -91,6 +92,9 @@ function App() {
           <Route path="/company/chat/:matchId" element={<CompanyChat />} />
         </Routes>
       </Suspense>
+
+      {/* Vercel Speed Insights for performance monitoring */}
+      <SpeedInsights />
     </>
   )
 }
