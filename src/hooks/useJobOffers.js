@@ -19,7 +19,7 @@ export function useJobOffers() {
     const [offers, setOffers] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
-    const { user, profile } = useAuth()
+    const { user, isStudent } = useAuth()
     const isMounted = useRef(true)
 
     useEffect(() => {
@@ -28,7 +28,8 @@ export function useJobOffers() {
     }, [])
 
     const fetchOffers = useCallback(async (forceRefresh = false) => {
-        if (!user || profile?.type !== 'student') {
+        // Allow fetching even if isStudent is not yet determined
+        if (!user) {
             setLoading(false)
             return
         }
@@ -115,7 +116,7 @@ export function useJobOffers() {
                 setLoading(false)
             }
         }
-    }, [user, profile])
+    }, [user])
 
     useEffect(() => {
         fetchOffers()

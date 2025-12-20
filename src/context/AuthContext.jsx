@@ -229,8 +229,8 @@ export function AuthProvider({ children }) {
         profile,
         isLoggedIn: !!user,
         isEmailVerified,
-        isStudent: profile?.type === 'student',
-        isCompany: profile?.type === 'company',
+        isStudent: profile?.type === 'student' || user?.user_metadata?.type === 'student',
+        isCompany: profile?.type === 'company' || user?.user_metadata?.type === 'company',
         isLoading,
         authError,
         // Auth methods
