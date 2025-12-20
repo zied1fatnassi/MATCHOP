@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Lock, Eye, EyeOff, CheckCircle, Loader2, KeyRound, AlertCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -17,34 +17,52 @@ function ResetPassword() {
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
-    const [isValidSession, setIsValidSession] = useState(null)
+    const [isReady, setIsReady] = useState(false)
+    const [sessionError, setSessionError] = useState(false)
+    const hasCheckedSession = useRef(false)
 
     // Check if user has a valid password recovery session
     useEffect(() => {
-        const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
+        // Only run once
+        if (hasCheckedSession.current) return
+        hasCheckedSession.current = true
 
-            // Check if this is a recovery session
-            if (session && window.location.hash.includes('type=recovery')) {
-                setIsValidSession(true)
-            } else if (session) {
-                // User is logged in, allow password change
-                setIsValidSession(true)
+        const handleRecovery = async () => {
+            // Give Supabase time to process the hash
+            await new Promise(resolve => setTimeout(resolve, 500))
+
+            // Check for PASSWORD_RECOVERY event
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    // Clean up the URL hash
+                    window.history.replaceState(null, '', window.location.pathname)
+                    setIsReady(true)
+                    return
+                }
+
+                if (event === 'SIGNED_IN' && session) {
+                    setIsReady(true)
+                    return
+                }
+            })
+
+            // Also check current session
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                setIsReady(true)
             } else {
-                setIsValidSession(false)
+                // Wait a bit more for the auth state change
+                setTimeout(() => {
+                    if (!isReady) {
+                        setSessionError(true)
+                    }
+                }, 2000)
             }
+
+            return () => subscription.unsubscribe()
         }
 
-        checkSession()
-
-        // Also listen for auth state changes (Supabase redirects)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'PASSWORD_RECOVERY') {
-                setIsValidSession(true)
-            }
-        })
-
-        return () => subscription.unsubscribe()
+        handleRecovery()
     }, [])
 
     const handleSubmit = async (e) => {
@@ -78,7 +96,8 @@ function ResetPassword() {
 
             setIsSuccess(true)
 
-            // Redirect to login after 3 seconds
+            // Sign out and redirect to login
+            await supabase.auth.signOut()
             setTimeout(() => {
                 navigate('/student/login')
             }, 3000)
@@ -107,8 +126,8 @@ function ResetPassword() {
 
     const passwordStrength = getPasswordStrength()
 
-    // Invalid session - redirect to forgot password
-    if (isValidSession === false) {
+    // Session error - link expired or invalid
+    if (sessionError) {
         return (
             <div className="auth-page">
                 <div className="auth-container login-container">
@@ -147,11 +166,18 @@ function ResetPassword() {
     }
 
     // Loading session check
-    if (isValidSession === null) {
+    if (!isReady && !sessionError) {
         return (
             <div className="auth-page">
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                    <Loader2 size={48} className="spinner" style={{ color: 'white' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', gap: '1rem' }}>
+                    <Loader2 size={48} className="spinner" style={{ color: 'white', animation: 'spin 1s linear infinite' }} />
+                    <p style={{ color: 'white' }}>Verifying your reset link...</p>
+                    <style>{`
+                        @keyframes spin {
+                            from { transform: rotate(0deg); }
+                            to { transform: rotate(360deg); }
+                        }
+                    `}</style>
                 </div>
             </div>
         )
