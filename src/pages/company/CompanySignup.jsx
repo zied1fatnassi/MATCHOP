@@ -376,7 +376,7 @@ function CompanySignup() {
                     </form>
 
                     <p className="auth-terms">
-                        By signing up, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                        By signing up, you agree to our <Link to="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</Link> and <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</Link>
                     </p>
                 </div>
             </div>

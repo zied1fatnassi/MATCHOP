@@ -1,0 +1,123 @@
+/* Legal Pages Styling */
+
+.legal-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%);
+    padding: 2rem;
+    padding-top: calc(80px + 2rem);
+}
+
+.legal-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 3rem;
+}
+
+.legal-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.legal-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.5rem 0;
+}
+
+.legal-header .last-updated {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+}
+
+.legal-content {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.8;
+}
+
+.legal-content h2 {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 2rem 0 1rem 0;
+}
+
+.legal-content h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem 0;
+}
+
+.legal-content p {
+    margin: 0 0 1rem 0;
+}
+
+.legal-content ul {
+    margin: 0 0 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.legal-content ul li {
+    margin-bottom: 0.5rem;
+}
+
+.legal-content a {
+    color: #2196f3;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.legal-content a:hover {
+    color: #64b5f6;
+    text-decoration: underline;
+}
+
+.legal-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #2196f3;
+    text-decoration: none;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.legal-back-link:hover {
+    color: #64b5f6;
+    transform: translateX(-4px);
+}
+
+.legal-contact {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.legal-contact h2 {
+    margin-top: 0;
+}
+
+@media (max-width: 768px) {
+    .legal-page {
+        padding: 1rem;
+        padding-top: calc(70px + 1rem);
+    }
+
+    .legal-container {
+        padding: 1.5rem;
+    }
+
+    .legal-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .legal-content h2 {
+        font-size: 1.25rem;
+    }
+}

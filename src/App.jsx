@@ -11,6 +11,10 @@ const Landing = lazy(() => import('./pages/Landing'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
+// Legal pages
+const TermsOfService = lazy(() => import('./pages/legal/TermsOfService'))
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'))
+
 // Student pages
 const StudentSignup = lazy(() => import('./pages/student/StudentSignup'))
 const StudentLogin = lazy(() => import('./pages/student/StudentLogin'))
@@ -178,6 +182,10 @@ function App() {
           {/* Public Auth Routes - redirect if already logged in */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Legal Pages - always accessible */}
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           {/* Student Public Routes - redirect if already logged in */}
           <Route path="/student/signup" element={
