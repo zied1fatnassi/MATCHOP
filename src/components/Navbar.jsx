@@ -19,7 +19,7 @@ function Navbar() {
     const location = useLocation()
     const navigate = useNavigate()
     const { t, i18n } = useTranslation()
-    const { isLoggedIn, isStudent, isCompany, logout } = useAuth()
+    const { isLoggedIn, isStudent, isCompany, signOut } = useAuth()
 
     const studentLinks = [
         { to: '/student/matches', icon: <Heart size={18} />, label: t('nav.matches') },
@@ -48,8 +48,8 @@ function Navbar() {
         setLangOpen(false)
     }
 
-    const handleLogout = () => {
-        logout()
+    const handleLogout = async () => {
+        await signOut()
         navigate('/')
         setIsOpen(false)
     }

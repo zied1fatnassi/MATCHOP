@@ -1,7 +1,8 @@
-import { useState, lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { useState, useEffect, lazy, Suspense } from 'react'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import LoadingScreen from './components/LoadingScreen'
+import AuthToast from './components/AuthToast'
 
 // Lazy load all page components for code splitting
 // This reduces initial bundle size by ~60-70%
@@ -55,9 +56,73 @@ const RouteLoadingFallback = () => (
  * - Initial loading animation
  * - Role-based routing for students and companies
  * - Lazy-loaded routes for optimal performance
+ * - Auth event toast notifications
  */
 function App() {
   const [isLoading, setIsLoading] = useState(true)
+  const [toast, setToast] = useState(null)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Detect auth events from URL hash (email verification, password reset, errors)
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash) return
+
+    // Parse hash parameters
+    const params = new URLSearchParams(hash.substring(1))
+    const accessToken = params.get('access_token')
+    const error = params.get('error')
+    const errorDescription = params.get('error_description')
+    const type = params.get('type')
+
+    // Handle successful email verification
+    if (accessToken && type === 'signup') {
+      setToast({
+        type: 'success',
+        message: '✅ Email verified successfully! You can now sign in.'
+      })
+      // Clean up URL
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+    // Handle successful password recovery
+    else if (accessToken && type === 'recovery') {
+      setToast({
+        type: 'success',
+        message: '✅ Password reset successful! Please set your new password.'
+      })
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+    // Handle successful sign in via magic link
+    else if (accessToken && !type) {
+      setToast({
+        type: 'success',
+        message: '✅ Welcome back! You are now signed in.'
+      })
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+    // Handle errors
+    else if (error) {
+      let message = errorDescription?.replace(/\+/g, ' ') || 'Authentication failed'
+
+      if (error === 'access_denied' && errorDescription?.includes('expired')) {
+        message = 'The verification link has expired. Please request a new one.'
+      } else if (error === 'access_denied') {
+        message = 'Access denied. Please try again or request a new link.'
+      }
+
+      setToast({
+        type: 'error',
+        message: `❌ ${message}`
+      })
+      // Clean up URL
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [location])
+
+  const handleToastClose = () => {
+    setToast(null)
+  }
 
   return (
     <>
@@ -65,6 +130,16 @@ function App() {
         <LoadingScreen
           minDuration={1000}
           onComplete={() => setIsLoading(false)}
+        />
+      )}
+
+      {/* Auth Toast Notification */}
+      {toast && (
+        <AuthToast
+          type={toast.type}
+          message={toast.message}
+          duration={5000}
+          onClose={handleToastClose}
         />
       )}
 
@@ -96,4 +171,3 @@ function App() {
 }
 
 export default App
-
