@@ -86,8 +86,7 @@ export function useJobOffers() {
                 offersCache.swipedIds = new Set(swipedOfferIds)
             }
 
-            // STEP 2: Get active job offers with company info
-            // Use companies:company_id syntax to specify the FK relationship explicitly
+            // STEP 2: Get active job offers with company info (name is in profiles, not companies)
             console.log('[useJobOffers] Querying job_offers with companies join...')
 
             const offersResult = await supabase
@@ -105,9 +104,8 @@ export function useJobOffers() {
                     is_active,
                     company_id,
                     created_at,
-                    companies:company_id (
+                    companies (
                         id,
-                        name,
                         logo_url,
                         sector,
                         location,
@@ -133,11 +131,29 @@ export function useJobOffers() {
                 return
             }
 
+            // STEP 3: Get company names from profiles table (companies.name doesn't exist, name is in profiles)
+            const companyIds = [...new Set((offersResult.data || []).map(o => o.company_id).filter(Boolean))]
+            let companyNames = {}
+
+            if (companyIds.length > 0) {
+                const { data: profilesData } = await supabase
+                    .from('profiles')
+                    .select('id, name, avatar_url')
+                    .in('id', companyIds)
+
+                if (profilesData) {
+                    companyNames = profilesData.reduce((acc, p) => {
+                        acc[p.id] = { name: p.name, avatar_url: p.avatar_url }
+                        return acc
+                    }, {})
+                }
+            }
+
             // Transform and filter offers
             const transformedOffers = (offersResult.data || []).map(offer => ({
                 ...offer,
-                company: offer.companies?.name || 'Unknown Company',
-                companyLogo: offer.companies?.logo_url,
+                company: companyNames[offer.company_id]?.name || 'Unknown Company',
+                companyLogo: offer.companies?.logo_url || companyNames[offer.company_id]?.avatar_url,
                 salary: offer.salary_min && offer.salary_max
                     ? `${offer.salary_min}-${offer.salary_max} ${offer.salary_currency || 'TND'}/month`
                     : 'Competitive',

@@ -75,8 +75,8 @@ export function useMatches() {
                     *,
                     job_offers (
                         id, title, description, location,
-                        companies:company_id (
-                            id, name, logo_url, sector
+                        companies (
+                            id, logo_url, sector
                         )
                     ),
                     student_profiles (

@@ -30,14 +30,13 @@ function StudentChat() {
             if (!matchId) return
 
             try {
-                // Get match info including company details
-                // Use companies:company_id to specify FK relationship
+                // Get match info including company details (name is in profiles, not companies)
                 const { data: matchData, error } = await supabase
                     .from('matches')
                     .select(`
                         *,
-                        companies:company_id (
-                            id, name, logo_url
+                        companies (
+                            id, logo_url
                         ),
                         job_offers (
                             title
@@ -48,9 +47,23 @@ function StudentChat() {
 
                 if (error) throw error
 
+                // Get company name from profiles table
+                let companyName = 'Company'
+                if (matchData.company_id) {
+                    const { data: profileData } = await supabase
+                        .from('profiles')
+                        .select('name')
+                        .eq('id', matchData.company_id)
+                        .single()
+
+                    if (profileData) {
+                        companyName = profileData.name
+                    }
+                }
+
                 setMatchDetails({
                     id: matchData.id,
-                    company: matchData.companies?.name || 'Company',
+                    company: companyName,
                     logo: matchData.companies?.logo_url,
                     title: matchData.job_offers?.title || 'Job Offer',
                     isOnline: false
