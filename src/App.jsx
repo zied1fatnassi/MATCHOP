@@ -1,11 +1,12 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import LoadingScreen from './components/LoadingScreen'
 import AuthToast from './components/AuthToast'
+import { ProtectedRoute, PublicRoute } from './components/RouteGuards'
+import { useAuth } from './context/AuthContext'
 
 // Lazy load all page components for code splitting
-// This reduces initial bundle size by ~60-70%
 const Landing = lazy(() => import('./pages/Landing'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
@@ -54,17 +55,42 @@ const RouteLoadingFallback = () => (
 )
 
 /**
+ * Smart Landing component that redirects logged-in users
+ */
+function SmartLanding() {
+  const { isLoggedIn, isLoading, isStudent, isCompany } = useAuth()
+
+  // While auth is loading, show the landing page (it will redirect after loading)
+  if (isLoading) {
+    return <RouteLoadingFallback />
+  }
+
+  // Redirect logged-in users to their dashboard
+  if (isLoggedIn) {
+    if (isStudent) {
+      return <Navigate to="/student/swipe" replace />
+    }
+    if (isCompany) {
+      return <Navigate to="/company/candidates" replace />
+    }
+  }
+
+  // Not logged in - show landing
+  return <Landing />
+}
+
+/**
  * Main App component with:
  * - Initial loading animation
  * - Role-based routing for students and companies
  * - Lazy-loaded routes for optimal performance
  * - Auth event toast notifications
+ * - Protected and public route guards
  */
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [toast, setToast] = useState(null)
   const location = useLocation()
-  const navigate = useNavigate()
 
   // Detect auth events from URL hash (email verification, password reset, errors)
   useEffect(() => {
@@ -84,7 +110,6 @@ function App() {
         type: 'success',
         message: '✅ Email verified successfully! You can now sign in.'
       })
-      // Clean up URL
       window.history.replaceState(null, '', window.location.pathname)
     }
     // Handle successful password recovery
@@ -117,7 +142,6 @@ function App() {
         type: 'error',
         message: `❌ ${message}`
       })
-      // Clean up URL
       window.history.replaceState(null, '', window.location.pathname)
     }
   }, [location])
@@ -148,28 +172,85 @@ function App() {
       <Navbar />
       <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          {/* Landing - redirects if logged in */}
+          <Route path="/" element={<SmartLanding />} />
 
-          {/* Auth Routes */}
+          {/* Public Auth Routes - redirect if already logged in */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Student Routes */}
-          <Route path="/student/signup" element={<StudentSignup />} />
-          <Route path="/student/login" element={<StudentLogin />} />
-          <Route path="/student/profile" element={<StudentProfile />} />
-          <Route path="/student/swipe" element={<StudentSwipe />} />
-          <Route path="/student/matches" element={<StudentMatches />} />
-          <Route path="/student/chat/:matchId" element={<StudentChat />} />
+          {/* Student Public Routes - redirect if already logged in */}
+          <Route path="/student/signup" element={
+            <PublicRoute>
+              <StudentSignup />
+            </PublicRoute>
+          } />
+          <Route path="/student/login" element={
+            <PublicRoute>
+              <StudentLogin />
+            </PublicRoute>
+          } />
 
-          {/* Company Routes */}
-          <Route path="/company/signup" element={<CompanySignup />} />
-          <Route path="/company/login" element={<CompanyLogin />} />
-          <Route path="/company/profile" element={<CompanyProfile />} />
-          <Route path="/company/post-offer" element={<PostOffer />} />
-          <Route path="/company/candidates" element={<ViewCandidates />} />
-          <Route path="/company/matches" element={<CompanyMatches />} />
-          <Route path="/company/chat/:matchId" element={<CompanyChat />} />
+          {/* Student Protected Routes - require authentication */}
+          <Route path="/student/profile" element={
+            <ProtectedRoute requiredType="student">
+              <StudentProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/student/swipe" element={
+            <ProtectedRoute requiredType="student">
+              <StudentSwipe />
+            </ProtectedRoute>
+          } />
+          <Route path="/student/matches" element={
+            <ProtectedRoute requiredType="student">
+              <StudentMatches />
+            </ProtectedRoute>
+          } />
+          <Route path="/student/chat/:matchId" element={
+            <ProtectedRoute requiredType="student">
+              <StudentChat />
+            </ProtectedRoute>
+          } />
+
+          {/* Company Public Routes - redirect if already logged in */}
+          <Route path="/company/signup" element={
+            <PublicRoute>
+              <CompanySignup />
+            </PublicRoute>
+          } />
+          <Route path="/company/login" element={
+            <PublicRoute>
+              <CompanyLogin />
+            </PublicRoute>
+          } />
+
+          {/* Company Protected Routes - require authentication */}
+          <Route path="/company/profile" element={
+            <ProtectedRoute requiredType="company">
+              <CompanyProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/company/post-offer" element={
+            <ProtectedRoute requiredType="company">
+              <PostOffer />
+            </ProtectedRoute>
+          } />
+          <Route path="/company/candidates" element={
+            <ProtectedRoute requiredType="company">
+              <ViewCandidates />
+            </ProtectedRoute>
+          } />
+          <Route path="/company/matches" element={
+            <ProtectedRoute requiredType="company">
+              <CompanyMatches />
+            </ProtectedRoute>
+          } />
+          <Route path="/company/chat/:matchId" element={
+            <ProtectedRoute requiredType="company">
+              <CompanyChat />
+            </ProtectedRoute>
+          } />
         </Routes>
       </Suspense>
     </>

@@ -14,18 +14,61 @@ export function AuthProvider({ children }) {
     const [authError, setAuthError] = useState(null)
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null)
-            if (session?.user) {
-                fetchProfile(session.user.id)
+        let timeoutId = null
+        let didComplete = false
+
+        console.log('[Auth] Starting auth initialization...')
+
+        // Timeout protection - if auth takes too long, force loading to complete
+        timeoutId = setTimeout(() => {
+            if (!didComplete) {
+                console.error('[Auth] TIMEOUT: Auth initialization timed out after 10 seconds')
+                setIsLoading(false)
             }
+        }, 10000)
+
+        // Get initial session
+        console.log('[Auth] Calling supabase.auth.getSession()...')
+        supabase.auth.getSession().then(async ({ data, error }) => {
+            didComplete = true
+            clearTimeout(timeoutId)
+
+            console.log('[Auth] getSession result:', {
+                hasSession: !!data?.session,
+                userId: data?.session?.user?.id,
+                userEmail: data?.session?.user?.email,
+                error: error
+            })
+
+            if (error) {
+                console.error('[Auth] getSession ERROR:', error.code, error.message)
+                setIsLoading(false)
+                return
+            }
+
+            const session = data?.session
+            setUser(session?.user ?? null)
+
+            if (session?.user) {
+                console.log('[Auth] User found, fetching profile...')
+                // Wait for profile fetch before setting loading to false
+                await fetchProfile(session.user.id)
+                console.log('[Auth] Profile fetch complete, setting loading=false')
+            } else {
+                console.log('[Auth] No session, setting loading=false')
+            }
+            setIsLoading(false)
+        }).catch(err => {
+            didComplete = true
+            clearTimeout(timeoutId)
+            console.error('[Auth] getSession EXCEPTION:', err)
             setIsLoading(false)
         })
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
+                console.log('[Auth] onAuthStateChange:', event, session?.user?.id)
                 setUser(session?.user ?? null)
                 if (session?.user) {
                     await fetchProfile(session.user.id)
@@ -45,11 +88,58 @@ export function AuthProvider({ children }) {
 
     const fetchProfile = useCallback(async (userId) => {
         try {
-            const { data, error } = await supabase
+            let { data, error } = await supabase
                 .from('profiles')
                 .select('*, student_profiles(*), companies(*)')
                 .eq('id', userId)
                 .single()
+
+            // If profile doesn't exist, try to create it from user metadata
+            if (error?.code === 'PGRST116') {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user?.user_metadata) {
+                    const { type, name } = user.user_metadata
+                    if (type && name) {
+                        console.log('Profile not found, creating from user metadata...')
+                        const { error: insertError } = await supabase
+                            .from('profiles')
+                            .insert({
+                                id: userId,
+                                type: type,
+                                name: name,
+                                email: user.email
+                            })
+
+                        if (!insertError) {
+                            // Also create type-specific profile
+                            if (type === 'student') {
+                                await supabase.from('student_profiles').insert({
+                                    id: userId,
+                                    bio: '',
+                                    location: '',
+                                    skills: []
+                                })
+                            } else if (type === 'company') {
+                                await supabase.from('companies').insert({
+                                    id: userId,
+                                    website: '',
+                                    sector: '',
+                                    description: ''
+                                })
+                            }
+
+                            // Fetch the newly created profile
+                            const result = await supabase
+                                .from('profiles')
+                                .select('*, student_profiles(*), companies(*)')
+                                .eq('id', userId)
+                                .single()
+                            data = result.data
+                            error = result.error
+                        }
+                    }
+                }
+            }
 
             if (!error && data) {
                 setProfile(data)
@@ -62,6 +152,8 @@ export function AuthProvider({ children }) {
     /**
      * Sign up a new user with Supabase Auth
      * Creates profile and type-specific data after signup
+     * NOTE: If email verification is required, profile creation is deferred
+     * until the user verifies their email and gets a valid session.
      * @param {string} email 
      * @param {string} password 
      * @param {string} userType - 'student' or 'company'
@@ -89,34 +181,41 @@ export function AuthProvider({ children }) {
             // Check if email confirmation is required
             const needsEmailVerification = data.user && !data.session
 
-            // Create profile after signup (only if user was created)
-            if (data.user) {
-                const { error: profileError } = await supabase.from('profiles').insert({
-                    id: data.user.id,
-                    type: userType,
-                    name: userData.name || 'User',
-                    email: email
-                })
-
-                if (profileError && !profileError.message.includes('duplicate')) {
-                    console.error('Profile creation error:', profileError)
-                }
-
-                // Create type-specific profile
-                if (userType === 'student') {
-                    await supabase.from('student_profiles').insert({
+            // Only create profile if we have a session (no email verification required)
+            // Otherwise, profile will be created when user verifies email and fetchProfile runs
+            if (data.user && data.session) {
+                try {
+                    const { error: profileError } = await supabase.from('profiles').insert({
                         id: data.user.id,
-                        bio: userData.bio || '',
-                        location: userData.location || '',
-                        skills: userData.skills || []
+                        type: userType,
+                        name: userData.name || 'User',
+                        email: email
                     })
-                } else if (userType === 'company') {
-                    await supabase.from('companies').insert({
-                        id: data.user.id,
-                        website: userData.website || '',
-                        sector: userData.sector || '',
-                        description: userData.description || ''
-                    })
+
+                    if (profileError && !profileError.message.includes('duplicate')) {
+                        console.error('Profile creation error:', profileError)
+                    }
+
+                    // Create type-specific profile
+                    if (userType === 'student') {
+                        await supabase.from('student_profiles').insert({
+                            id: data.user.id,
+                            bio: userData.bio || '',
+                            location: userData.location || '',
+                            skills: userData.skills || []
+                        })
+                    } else if (userType === 'company') {
+                        await supabase.from('companies').insert({
+                            id: data.user.id,
+                            website: userData.website || '',
+                            sector: userData.sector || '',
+                            description: userData.description || ''
+                        })
+                    }
+                } catch (profileErr) {
+                    // Profile creation failed, but signup succeeded
+                    // Profile will be auto-created on next login via fetchProfile
+                    console.warn('Profile creation failed, will retry on login:', profileErr)
                 }
             }
 
@@ -156,12 +255,18 @@ export function AuthProvider({ children }) {
      * Sign out the current user
      */
     const signOut = useCallback(async () => {
+        console.log('[AuthContext] signOut called')
         setAuthError(null)
+
         const { error } = await supabase.auth.signOut()
+
         if (error) {
+            console.error('[AuthContext] signOut error:', error)
             setAuthError(error)
             throw error
         }
+
+        console.log('[AuthContext] signOut successful, clearing user state')
         setUser(null)
         setProfile(null)
     }, [])

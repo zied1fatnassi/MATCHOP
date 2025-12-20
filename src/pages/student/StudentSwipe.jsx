@@ -10,7 +10,7 @@ import { useJobOffers } from '../../hooks/useJobOffers'
 import './StudentSwipe.css'
 
 function StudentSwipe() {
-    const { offers: realOffers, loading, error, swipe } = useJobOffers()
+    const { offers: realOffers, loading, error, swipe, refresh } = useJobOffers()
     const [offers, setOffers] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [showMatch, setShowMatch] = useState(false)
@@ -99,7 +99,7 @@ function StudentSwipe() {
                 <div className="glass-card">
                     <h3 className="text-red-500">Oops! Something went wrong.</h3>
                     <p>{error}</p>
-                    <button className="btn btn-primary mt-4" onClick={() => window.location.reload()}>Try Again</button>
+                    <button className="btn btn-primary mt-4" onClick={() => refresh()}>Try Again</button>
                 </div>
             </div>
         )

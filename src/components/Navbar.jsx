@@ -19,7 +19,7 @@ function Navbar() {
     const location = useLocation()
     const navigate = useNavigate()
     const { t, i18n } = useTranslation()
-    const { isLoggedIn, isStudent, isCompany, signOut } = useAuth()
+    const { isLoggedIn, isStudent, isCompany, isLoading, signOut, user } = useAuth()
 
     const studentLinks = [
         { to: '/student/matches', icon: <Heart size={18} />, label: t('nav.matches') },
@@ -34,6 +34,7 @@ function Navbar() {
         { to: '/company/profile', icon: <User size={18} />, label: t('nav.profile') },
     ]
 
+    // Determine links based on user type, with fallback for when type isn't loaded yet
     const links = isStudent ? studentLinks : isCompany ? companyLinks : []
 
     const languages = [
@@ -49,9 +50,15 @@ function Navbar() {
     }
 
     const handleLogout = async () => {
-        await signOut()
-        navigate('/')
-        setIsOpen(false)
+        console.log('[Navbar] Logout clicked')
+        try {
+            await signOut()
+            console.log('[Navbar] signOut completed, navigating to /')
+            navigate('/')
+            setIsOpen(false)
+        } catch (err) {
+            console.error('[Navbar] Logout failed:', err)
+        }
     }
 
     return (
@@ -108,8 +115,8 @@ function Navbar() {
                         )}
                     </div>
 
-                    {/* Auth Buttons (when not logged in) */}
-                    {!isLoggedIn && (
+                    {/* Auth Buttons (when not logged in and not loading) */}
+                    {!isLoggedIn && !isLoading && (
                         <div className="navbar-auth">
                             <Link to="/student/signup" className="btn btn-secondary btn-sm">
                                 {t('landing.ctaStudent')}

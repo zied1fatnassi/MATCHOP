@@ -176,15 +176,15 @@ WITH CHECK (
 -- SWIPES TABLE POLICIES
 -- =====================================================
 
--- Users can view their own swipes
-CREATE POLICY "Users can view own swipes"
+-- Students can view their own swipes
+CREATE POLICY "Students can view own swipes"
 ON swipes FOR SELECT
-USING (auth.uid() = user_id);
+USING (auth.uid() = student_id);
 
--- Users can insert their own swipes
-CREATE POLICY "Users can insert own swipes"
+-- Students can insert their own swipes
+CREATE POLICY "Students can insert own swipes"
 ON swipes FOR INSERT
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (auth.uid() = student_id);
 
 -- =====================================================
 -- STORAGE BUCKET POLICIES

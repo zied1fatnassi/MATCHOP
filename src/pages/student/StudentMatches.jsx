@@ -1,42 +1,56 @@
 import { Link } from 'react-router-dom'
-import { MessageCircle, MapPin, Briefcase } from 'lucide-react'
+import { MessageCircle, MapPin, Loader, AlertCircle, RefreshCw } from 'lucide-react'
+import { useMatches } from '../../hooks/useMatches'
 import './StudentMatches.css'
 
-// Mock matches data
-const mockMatches = [
-    {
-        id: 1,
-        company: 'DataFlow Analytics',
-        logo: null,
-        title: 'Data Science Intern',
-        location: 'Remote',
-        matchedAt: '2 hours ago',
-        lastMessage: "Hi! We're excited about your application...",
-        unread: true,
-    },
-    {
-        id: 2,
-        company: 'TechStart Inc.',
-        logo: null,
-        title: 'Software Engineer Intern',
-        location: 'San Francisco, CA',
-        matchedAt: '1 day ago',
-        lastMessage: 'Looking forward to our interview next week!',
-        unread: false,
-    },
-    {
-        id: 3,
-        company: 'CloudNine',
-        logo: null,
-        title: 'DevOps Engineer Intern',
-        location: 'Seattle, WA',
-        matchedAt: '3 days ago',
-        lastMessage: null,
-        unread: false,
-    },
-]
-
+/**
+ * Student Matches Page
+ * Shows real matches from Supabase, not mock data
+ */
 function StudentMatches() {
+    const { matches, loading, error, refresh } = useMatches()
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="matches-page">
+                <div className="container">
+                    <div className="matches-header">
+                        <h1>Your Matches</h1>
+                        <p>Companies interested in your profile</p>
+                    </div>
+                    <div className="matches-loading">
+                        <Loader className="animate-spin" size={48} />
+                        <p>Loading your matches...</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="matches-page">
+                <div className="container">
+                    <div className="matches-header">
+                        <h1>Your Matches</h1>
+                        <p>Companies interested in your profile</p>
+                    </div>
+                    <div className="matches-error glass-card">
+                        <AlertCircle size={48} className="text-red-500" />
+                        <h3>Failed to load matches</h3>
+                        <p>{error}</p>
+                        <button className="btn btn-primary" onClick={() => refresh()}>
+                            <RefreshCw size={18} />
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="matches-page">
             <div className="container">
@@ -45,48 +59,60 @@ function StudentMatches() {
                     <p>Companies interested in your profile</p>
                 </div>
 
-                {mockMatches.length > 0 ? (
+                {matches.length > 0 ? (
                     <div className="matches-list">
-                        {mockMatches.map(match => (
-                            <Link
-                                to={`/student/chat/${match.id}`}
-                                key={match.id}
-                                className={`match-card glass-card ${match.unread ? 'unread' : ''}`}
-                            >
-                                <div className="match-avatar">
-                                    {match.logo ? (
-                                        <img src={match.logo} alt={match.company} />
-                                    ) : (
-                                        <span>{match.company.charAt(0)}</span>
-                                    )}
-                                </div>
+                        {matches.map(match => {
+                            // Extract company and job info from the joined data
+                            const company = match.job_offers?.companies
+                            const jobOffer = match.job_offers
+                            const companyName = company?.name || 'Unknown Company'
+                            const jobTitle = jobOffer?.title || 'Job Opportunity'
+                            const location = jobOffer?.location || company?.location || 'Remote'
+                            const matchedAt = match.matched_at
+                                ? new Date(match.matched_at).toLocaleDateString()
+                                : 'Recently'
 
-                                <div className="match-info">
-                                    <div className="match-header">
-                                        <h3 className="match-company">{match.company}</h3>
-                                        <span className="match-time">{match.matchedAt}</span>
+                            return (
+                                <Link
+                                    to={`/student/chat/${match.id}`}
+                                    key={match.id}
+                                    className={`match-card glass-card ${match.unread ? 'unread' : ''}`}
+                                >
+                                    <div className="match-avatar">
+                                        {company?.logo_url ? (
+                                            <img src={company.logo_url} alt={companyName} />
+                                        ) : (
+                                            <span>{companyName.charAt(0)}</span>
+                                        )}
                                     </div>
 
-                                    <p className="match-title">{match.title}</p>
+                                    <div className="match-info">
+                                        <div className="match-header">
+                                            <h3 className="match-company">{companyName}</h3>
+                                            <span className="match-time">{matchedAt}</span>
+                                        </div>
 
-                                    <div className="match-location">
-                                        <MapPin size={14} />
-                                        <span>{match.location}</span>
+                                        <p className="match-title">{jobTitle}</p>
+
+                                        <div className="match-location">
+                                            <MapPin size={14} />
+                                            <span>{location}</span>
+                                        </div>
+
+                                        {match.last_message ? (
+                                            <p className="match-message">{match.last_message}</p>
+                                        ) : (
+                                            <p className="match-message no-message">
+                                                <MessageCircle size={14} />
+                                                Start the conversation!
+                                            </p>
+                                        )}
                                     </div>
 
-                                    {match.lastMessage ? (
-                                        <p className="match-message">{match.lastMessage}</p>
-                                    ) : (
-                                        <p className="match-message no-message">
-                                            <MessageCircle size={14} />
-                                            Start the conversation!
-                                        </p>
-                                    )}
-                                </div>
-
-                                {match.unread && <span className="unread-badge" />}
-                            </Link>
-                        ))}
+                                    {match.unread && <span className="unread-badge" />}
+                                </Link>
+                            )
+                        })}
                     </div>
                 ) : (
                     <div className="no-matches glass-card">

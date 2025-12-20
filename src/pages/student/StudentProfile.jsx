@@ -31,12 +31,7 @@ function StudentProfile() {
     const [saved, setSaved] = useState(false)
     const [error, setError] = useState('')
 
-    // Redirect if not logged in
-    useEffect(() => {
-        if (!isLoggedIn && !user) {
-            navigate('/student/login')
-        }
-    }, [isLoggedIn, user, navigate])
+    // Note: Auth redirect handled by ProtectedRoute wrapper in App.jsx
 
     // Load profile from auth context and database
     useEffect(() => {
