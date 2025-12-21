@@ -43,16 +43,14 @@ function PostOffer() {
 
         setLoading(true)
         try {
-            const { error } = await supabase.from('job_offers').insert({
+            const { error } = await supabase.from('offers').insert({
                 company_id: user.id,
                 title: offer.title,
                 description: offer.description,
-                requirements: offer.requirements ? [offer.requirements] : [], // Storing as array for now
+                req_skills: offer.skills, // V2.1 uses req_skills
                 location: offer.location || 'Remote',
-                salary_min: parseInt(offer.salary.replace(/\D/g, '')) || 0, // Basic parsing
-                salary_max: parseInt(offer.salary.replace(/\D/g, '')) || 0,
-                skills: offer.skills,
-                is_active: true
+                salary_range: offer.salary || 'Competitive',
+                status: 'active'
             })
 
             if (error) throw error

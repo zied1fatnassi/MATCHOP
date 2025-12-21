@@ -62,13 +62,22 @@ export function useJobOffers() {
             setError(null)
         }
 
+        // TIMEOUT PROTECTION - Force loading to complete after 30 seconds
+        const timeoutId = setTimeout(() => {
+            console.error('[useJobOffers] TIMEOUT: Query took too long, forcing loading=false')
+            if (isMounted.current) {
+                setLoading(false)
+                setError('Request timed out. Please try again.')
+            }
+        }, 30000)
+
         try {
             // STEP 1: Get swipes for this student
             let swipedOfferIds = []
-            console.log('[useJobOffers] Querying swipes for student_id:', user.id)
+            console.log('[useJobOffers] Querying student_swipes for student_id:', user.id)
 
             const swipeResult = await supabase
-                .from('swipes')
+                .from('student_swipes')
                 .select('offer_id')
                 .eq('student_id', user.id)
 
@@ -86,12 +95,13 @@ export function useJobOffers() {
                 offersCache.swipedIds = new Set(swipedOfferIds)
             }
 
-            // STEP 2: Get active job offers from the view (pre-joined with companies and profiles)
-            console.log('[useJobOffers] Querying job_offers_with_company view...')
+            // STEP 2: Get active offers with company data
+            console.log('[useJobOffers] Querying offers with companies...')
 
             const offersResult = await supabase
-                .from('job_offers_with_company')
-                .select('*')
+                .from('offers')
+                .select('*, companies!company_id(id, company_name, logo_url, industry)')
+                .eq('status', 'active')
 
             console.log('[useJobOffers] Job offers query result:', {
                 data: offersResult.data,
@@ -101,6 +111,7 @@ export function useJobOffers() {
 
             if (offersResult.error) {
                 console.error('[useJobOffers] Job offers query ERROR:', offersResult.error.code, offersResult.error.message)
+                clearTimeout(timeoutId) // Clear timeout on error
                 if (isMounted.current) {
                     setError(`Failed to load jobs: ${offersResult.error.message} (code: ${offersResult.error.code})`)
                     setOffers([])
@@ -109,15 +120,14 @@ export function useJobOffers() {
                 return
             }
 
-            // Transform offers (view already has all data pre-joined)
+            // Transform offers (now joining companies)
             const transformedOffers = (offersResult.data || []).map(offer => ({
                 ...offer,
-                company: offer.company_name || 'Unknown Company',
-                companyLogo: offer.logo_url || offer.avatar_url,
-                salary: offer.salary_min && offer.salary_max
-                    ? `${offer.salary_min}-${offer.salary_max} ${offer.salary_currency || 'TND'}/month`
-                    : 'Competitive',
-                hasMatched: Math.random() > 0.7
+                company: offer.companies?.company_name || 'Unknown Company',
+                companyLogo: offer.companies?.logo_url,
+                industry: offer.companies?.industry,
+                salary: offer.salary_range || 'Competitive',
+                skills: offer.req_skills || []
             }))
 
             // Update cache
@@ -131,6 +141,8 @@ export function useJobOffers() {
 
             console.log('[useJobOffers] Final result:', filteredOffers.length, 'offers to show, setting loading=false')
 
+            clearTimeout(timeoutId) // Clear timeout on success
+
             if (isMounted.current) {
                 setOffers(filteredOffers)
                 setError(null)
@@ -138,6 +150,7 @@ export function useJobOffers() {
             }
         } catch (err) {
             console.error('[useJobOffers] Unexpected exception:', err)
+            clearTimeout(timeoutId) // Clear timeout on error
             if (isMounted.current) {
                 setError(err.message || 'Failed to load job offers')
                 setOffers([])
@@ -159,7 +172,7 @@ export function useJobOffers() {
         console.log('[useJobOffers] Recording swipe:', direction, 'on offer:', offerId, 'for student:', user.id)
 
         const { data, error: swipeError } = await supabase
-            .from('swipes')
+            .from('student_swipes')
             .insert({
                 student_id: user.id,
                 offer_id: offerId,

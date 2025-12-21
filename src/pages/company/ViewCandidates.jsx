@@ -1,77 +1,84 @@
 import { useState } from 'react'
-import { Heart, X, Eye, MessageCircle, Filter, Grid, List } from 'lucide-react'
-import MatchModal from '../../components/MatchModal'
+import { Heart, X, Eye, Filter, Grid, List, Loader, AlertCircle, RefreshCw } from 'lucide-react'
+import { useCandidates } from '../../hooks/useCandidates'
+import MatchToast from '../../components/MatchToast'
 import './ViewCandidates.css'
 
-// Mock candidates data
-const mockCandidates = [
-    {
-        id: 1,
-        name: 'Alex Johnson',
-        photo: null,
-        title: 'Computer Science Student',
-        university: 'Stanford University',
-        location: 'San Francisco, CA',
-        skills: ['React', 'Python', 'Machine Learning', 'SQL'],
-        matchScore: 95,
-        bio: 'Passionate about building products that make a difference. Looking for an internship where I can grow and contribute.',
-        hasLiked: true, // Has liked our job offer
-    },
-    {
-        id: 2,
-        name: 'Sarah Chen',
-        photo: null,
-        title: 'Data Science Student',
-        university: 'MIT',
-        location: 'Boston, MA',
-        skills: ['Python', 'TensorFlow', 'SQL', 'R'],
-        matchScore: 92,
-        bio: 'Data enthusiast with a passion for turning numbers into insights. Experience with ML projects.',
-        hasLiked: true,
-    },
-    {
-        id: 3,
-        name: 'Mike Ross',
-        photo: null,
-        title: 'Software Engineering Student',
-        university: 'UC Berkeley',
-        location: 'Berkeley, CA',
-        skills: ['JavaScript', 'Node.js', 'React', 'AWS'],
-        matchScore: 88,
-        bio: 'Full-stack developer passionate about clean code and great user experiences.',
-        hasLiked: false,
-    },
-    {
-        id: 4,
-        name: 'Emily Davis',
-        photo: null,
-        title: 'UX Design Student',
-        university: 'RISD',
-        location: 'Providence, RI',
-        skills: ['Figma', 'UI Design', 'User Research', 'Prototyping'],
-        matchScore: 85,
-        bio: 'Creative designer focused on building intuitive and beautiful digital experiences.',
-        hasLiked: true,
-    },
-]
-
 function ViewCandidates() {
-    const [candidates, setCandidates] = useState(mockCandidates)
+    const { candidates, loading, error, filters, setFilters, swipeOnCandidate, refresh } = useCandidates()
     const [viewMode, setViewMode] = useState('grid')
-    const [showMatch, setShowMatch] = useState(false)
-    const [matchedCandidate, setMatchedCandidate] = useState(null)
-    const [selectedCandidate, setSelectedCandidate] = useState(null)
+    const [newMatch, setNewMatch] = useState(null)
+    const [showFilters, setShowFilters] = useState(false)
+    const [filterForm, setFilterForm] = useState({
+        skills: '',
+        location: ''
+    })
 
-    const handleLike = (candidate) => {
-        if (candidate.hasLiked) {
-            setMatchedCandidate(candidate)
-            setShowMatch(true)
+    const handleLike = async (candidate) => {
+        const { error: swipeError } = await swipeOnCandidate(candidate.id, 'right', candidate.offerId)
+
+        if (!swipeError) {
+            // Show match toast
+            setNewMatch({
+                id: `temp-${Date.now()}`, // Temporary ID until real match is created
+                companyName: candidate.name,
+                offerTitle: candidate.offerTitle,
+                matchedAt: new Date().toISOString()
+            })
         }
-        setCandidates(candidates.filter(c => c.id !== candidate.id))
     }
 
-    const handlePass = (candidateId) => {
-        setCandidates(candidates.filter(c => c.id !== candidateId))
+    const handlePass = async (candidate) => {
+        await swipeOnCandidate(candidate.id, 'left', candidate.offerId)
+    }
+
+    const applyFilters = () => {
+        const skillsArray = filterForm.skills
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s)
+
+        setFilters({
+            skills: skillsArray,
+            location: filterForm.location
+        })
+        setShowFilters(false)
+    }
+
+    const clearFilters = () => {
+        setFilterForm({ skills: '', location: '' })
+        setFilters({ skills: [], location: '' })
+    }
+
+    if (loading) {
+        return (
+            <div className="candidates-page">
+                <div className="container">
+                    <div className="candidates-loading">
+                        <Loader className="animate-spin" size={48} />
+                        <p>Loading candidates...</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="candidates-page">
+                <div className="container">
+                    <div className="candidates-error glass-card">
+                        <AlertCircle size={48} className="text-red-500" />
+                        <h3>Failed to load candidates</h3>
+                        <p>{error}</p>
+                        <button className="btn btn-primary" onClick={refresh}>
+                            <RefreshCw size={18} />
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -80,11 +87,39 @@ function ViewCandidates() {
                 <div className="candidates-header">
                     <div className="header-left">
                         <h1>Candidates</h1>
-                        <p>{candidates.length} candidates interested in your offers</p>
+                        <p>{candidates.length} students interested in your offers</p>
+                        {(filters.skills.length > 0 || filters.location) && (
+                            <div className="active-filters">
+                                {filters.skills.map(skill => (
+                                    <span key={skill} className="filter-tag">
+                                        {skill}
+                                        <button onClick={() => setFilters({
+                                            ...filters,
+                                            skills: filters.skills.filter(s => s !== skill)
+                                        })}>×</button>
+                                    </span>
+                                ))}
+                                {filters.location && (
+                                    <span className="filter-tag">
+                                        📍 {filters.location}
+                                        <button onClick={() => setFilters({
+                                            ...filters,
+                                            location: ''
+                                        })}>×</button>
+                                    </span>
+                                )}
+                                <button className="clear-filters-btn" onClick={clearFilters}>
+                                    Clear all
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="header-actions">
-                        <button className="btn btn-secondary btn-sm">
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setShowFilters(!showFilters)}
+                        >
                             <Filter size={18} />
                             Filter
                         </button>
@@ -105,59 +140,85 @@ function ViewCandidates() {
                     </div>
                 </div>
 
+                {showFilters && (
+                    <div className="filters-panel glass-card">
+                        <h3>Filter Candidates</h3>
+                        <div className="filter-inputs">
+                            <div className="input-group">
+                                <label>Skills (comma-separated)</label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="React, Python, AI"
+                                    value={filterForm.skills}
+                                    onChange={(e) => setFilterForm({ ...filterForm, skills: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Location</label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="Tunis"
+                                    value={filterForm.location}
+                                    onChange={(e) => setFilterForm({ ...filterForm, location: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="filter-actions">
+                            <button className="btn btn-secondary" onClick={() => setShowFilters(false)}>
+                                Cancel
+                            </button>
+                            <button className="btn btn-primary" onClick={applyFilters}>
+                                Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {candidates.length > 0 ? (
                     <div className={`candidates-grid ${viewMode}`}>
                         {candidates.map(candidate => (
                             <div key={candidate.id} className="candidate-card glass-card">
                                 <div className="candidate-header">
                                     <div className="candidate-avatar">
-                                        {candidate.photo ? (
-                                            <img src={candidate.photo} alt={candidate.name} />
-                                        ) : (
-                                            <span>{candidate.name.charAt(0)}</span>
-                                        )}
+                                        <span>{candidate.name.charAt(0)}</span>
                                         {candidate.hasLiked && (
                                             <span className="interested-badge">
                                                 <Heart size={12} fill="currentColor" />
                                             </span>
                                         )}
                                     </div>
-                                    <div className="match-score">
-                                        <span className="score-value">{candidate.matchScore}%</span>
-                                        <span className="score-label">Match</span>
-                                    </div>
+                                    <span className="interested-tag">Interested</span>
                                 </div>
 
                                 <div className="candidate-info">
                                     <h3>{candidate.name}</h3>
-                                    <p className="candidate-title">{candidate.title}</p>
-                                    <p className="candidate-university">{candidate.university}</p>
+                                    <p className="candidate-title">Applied for: {candidate.offerTitle}</p>
+                                    <p className="candidate-location">📍 {candidate.location}</p>
                                 </div>
 
                                 <div className="candidate-skills">
-                                    {candidate.skills.slice(0, 4).map(skill => (
+                                    {candidate.skills.slice(0, 6).map(skill => (
                                         <span key={skill} className="skill-badge">{skill}</span>
                                     ))}
+                                    {candidate.skills.length > 6 && (
+                                        <span className="skill-badge more">+{candidate.skills.length - 6}</span>
+                                    )}
                                 </div>
-
-                                <p className="candidate-bio">{candidate.bio}</p>
 
                                 <div className="candidate-actions">
                                     <button
                                         className="action-btn pass"
-                                        onClick={() => handlePass(candidate.id)}
+                                        onClick={() => handlePass(candidate)}
+                                        title="Pass"
                                     >
                                         <X size={20} />
                                     </button>
                                     <button
-                                        className="action-btn view"
-                                        onClick={() => setSelectedCandidate(candidate)}
-                                    >
-                                        <Eye size={20} />
-                                    </button>
-                                    <button
                                         className="action-btn like"
                                         onClick={() => handleLike(candidate)}
+                                        title="Accept - Create Match"
                                     >
                                         <Heart size={20} />
                                     </button>
@@ -169,16 +230,21 @@ function ViewCandidates() {
                     <div className="no-candidates glass-card">
                         <div className="empty-icon">👥</div>
                         <h2>No candidates yet</h2>
-                        <p>Candidates who are interested in your offers will appear here.</p>
+                        <p>Students who swipe right on your offers will appear here.</p>
+                        {(filters.skills.length > 0 || filters.location) && (
+                            <button className="btn btn-secondary" onClick={clearFilters}>
+                                Clear Filters
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
 
-            {showMatch && (
-                <MatchModal
-                    match={matchedCandidate}
-                    onClose={() => setShowMatch(false)}
-                    userType="company"
+            {/* Match Toast */}
+            {newMatch && (
+                <MatchToast
+                    match={newMatch}
+                    onClose={() => setNewMatch(null)}
                 />
             )}
         </div>

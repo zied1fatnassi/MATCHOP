@@ -1,106 +1,88 @@
-import { useState, useRef } from 'react'
+import { motion, useMotionValue, useTransform } from 'framer-motion'
 import { MapPin, Briefcase, DollarSign, Clock, Info } from 'lucide-react'
 import './SwipeCard.css'
 
 /**
- * Draggable swipe card for job offers
- * Click to view details, swipe to like/pass
+ * Framer Motion powered swipe card for job offers
+ * Smooth gesture-based animations like Tinder
  */
 function SwipeCard({ offer, onSwipe, isTop, onViewDetails }) {
-    const [startX, setStartX] = useState(0)
-    const [offsetX, setOffsetX] = useState(0)
-    const [isDragging, setIsDragging] = useState(false)
-    const [hasMoved, setHasMoved] = useState(false)
-    const cardRef = useRef(null)
+    const x = useMotionValue(0)
+    const rotate = useTransform(x, [-200, 200], [-25, 25])
+    const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0])
 
-    const handleDragStart = (e) => {
-        if (!isTop) return
-        setIsDragging(true)
-        setHasMoved(false)
-        setStartX(e.type === 'touchstart' ? e.touches[0].clientX : e.clientX)
-    }
+    // Like/Pass indicator opacity
+    const likeOpacity = useTransform(x, [0, 100], [0, 1])
+    const passOpacity = useTransform(x, [0, -100], [0, 1])
 
-    const handleDragMove = (e) => {
-        if (!isDragging || !isTop) return
-        const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX
-        const diff = currentX - startX
+    const handleDragEnd = (event, info) => {
+        const threshold = 150
 
-        // Mark as moved if dragged more than 5px
-        if (Math.abs(diff) > 5) {
-            setHasMoved(true)
-        }
-        setOffsetX(diff)
-    }
-
-    const handleDragEnd = () => {
-        if (!isDragging || !isTop) return
-        setIsDragging(false)
-
-        const threshold = 100
-        if (offsetX > threshold) {
-            onSwipe('right')
-        } else if (offsetX < -threshold) {
-            onSwipe('left')
-        } else {
-            setOffsetX(0)
+        if (info.offset.x > threshold) {
+            // Swiped right - Like
+            x.set(500) // Animate off screen
+            setTimeout(() => onSwipe('right'), 200)
+        } else if (info.offset.x < -threshold) {
+            // Swiped left - Pass
+            x.set(-500) // Animate off screen
+            setTimeout(() => onSwipe('left'), 200)
         }
     }
 
-    // Handle click to view details (only if not dragging)
-    const handleClick = () => {
-        if (!hasMoved && isTop && onViewDetails) {
-            onViewDetails(offer)
-        }
-    }
-
-    const rotation = offsetX * 0.1
-    const opacity = Math.max(0, 1 - Math.abs(offsetX) / 300)
-
-    const style = isTop ? {
-        transform: `translateX(${offsetX}px) rotate(${rotation}deg)`,
-        transition: isDragging ? 'none' : 'all 0.3s ease',
-        cursor: 'grab',
-    } : {
-        transform: 'scale(0.95) translateY(10px)',
-        opacity: 0.7,
+    if (!isTop) {
+        // Background cards (not interactive)
+        return (
+            <div className="swipe-card swipe-card-background">
+                <CardContent offer={offer} />
+            </div>
+        )
     }
 
     return (
-        <div
-            ref={cardRef}
-            className={`swipe-card ${isDragging ? 'dragging' : ''}`}
-            style={style}
-            onMouseDown={handleDragStart}
-            onMouseMove={handleDragMove}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
-            onTouchStart={handleDragStart}
-            onTouchMove={handleDragMove}
-            onTouchEnd={handleDragEnd}
-            onClick={handleClick}
+        <motion.div
+            className="swipe-card swipe-card-top"
+            style={{
+                x,
+                rotate,
+                opacity,
+                cursor: 'grab'
+            }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.7}
+            onDragEnd={handleDragEnd}
+            onClick={() => !x.get() && onViewDetails?.(offer)}
+            whileTap={{ cursor: 'grabbing' }}
         >
             {/* Swipe Indicators */}
-            <div
+            <motion.div
                 className="swipe-indicator like"
-                style={{ opacity: Math.max(0, offsetX / 100) }}
+                style={{ opacity: likeOpacity }}
             >
                 LIKE
-            </div>
-            <div
+            </motion.div>
+            <motion.div
                 className="swipe-indicator pass"
-                style={{ opacity: Math.max(0, -offsetX / 100) }}
+                style={{ opacity: passOpacity }}
             >
                 PASS
-            </div>
+            </motion.div>
 
             {/* View Details Hint */}
-            {isTop && (
-                <div className="view-details-hint">
-                    <Info size={14} />
-                    <span>Tap for details</span>
-                </div>
-            )}
+            <div className="view-details-hint">
+                <Info size={14} />
+                <span>Tap for details</span>
+            </div>
 
+            <CardContent offer={offer} />
+        </motion.div>
+    )
+}
+
+// Reusable card content component
+function CardContent({ offer }) {
+    return (
+        <>
             {/* Company Logo */}
             <div className="card-header">
                 <div className="company-logo">
@@ -112,42 +94,51 @@ function SwipeCard({ offer, onSwipe, isTop, onViewDetails }) {
                 </div>
                 <div className="company-info">
                     <h3 className="company-name">{offer.company}</h3>
-                    <span className="badge badge-primary">{offer.type}</span>
+                    <span className="badge badge-primary">{offer.type || 'Full-time'}</span>
                 </div>
             </div>
 
             {/* Job Details */}
             <div className="card-body">
                 <h2 className="job-title">{offer.title}</h2>
-                <p className="job-description">{offer.description}</p>
+                <p className="job-description">{offer.description || 'No description available'}</p>
 
                 <div className="job-details">
                     <div className="detail-item">
                         <MapPin size={16} />
-                        <span>{offer.location}</span>
+                        <span>{offer.location || 'Remote'}</span>
                     </div>
-                    <div className="detail-item">
-                        <Briefcase size={16} />
-                        <span>{offer.department}</span>
-                    </div>
+                    {offer.department && (
+                        <div className="detail-item">
+                            <Briefcase size={16} />
+                            <span>{offer.department}</span>
+                        </div>
+                    )}
                     <div className="detail-item">
                         <DollarSign size={16} />
-                        <span>{offer.salary}</span>
+                        <span>{offer.salary || 'Competitive'}</span>
                     </div>
-                    <div className="detail-item">
-                        <Clock size={16} />
-                        <span>{offer.duration}</span>
-                    </div>
+                    {offer.duration && (
+                        <div className="detail-item">
+                            <Clock size={16} />
+                            <span>{offer.duration}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Skills */}
-                <div className="skills-list">
-                    {offer.skills?.map((skill, index) => (
-                        <span key={index} className="skill-tag">{skill}</span>
-                    ))}
-                </div>
+                {offer.skills && offer.skills.length > 0 && (
+                    <div className="skills-list">
+                        {offer.skills.slice(0, 6).map((skill, index) => (
+                            <span key={index} className="skill-tag">{skill}</span>
+                        ))}
+                        {offer.skills.length > 6 && (
+                            <span className="skill-tag more">+{offer.skills.length - 6}</span>
+                        )}
+                    </div>
+                )}
             </div>
-        </div>
+        </>
     )
 }
 

@@ -62,12 +62,12 @@ function StudentMatches() {
                 {matches.length > 0 ? (
                     <div className="matches-list">
                         {matches.map(match => {
-                            // Extract company and job info from the joined data
-                            const company = match.job_offers?.companies
-                            const jobOffer = match.job_offers
-                            const companyName = company?.name || 'Unknown Company'
-                            const jobTitle = jobOffer?.title || 'Job Opportunity'
-                            const location = jobOffer?.location || company?.location || 'Remote'
+                            // Extract company and job info from the joined data (V2.1 schema)
+                            const company = match.offers?.companies
+                            const offer = match.offers
+                            const companyName = company?.company_name || 'Unknown Company'
+                            const jobTitle = offer?.title || 'Job Opportunity'
+                            const location = offer?.location || 'Remote'
                             const matchedAt = match.matched_at
                                 ? new Date(match.matched_at).toLocaleDateString()
                                 : 'Recently'

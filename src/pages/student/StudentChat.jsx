@@ -36,9 +36,9 @@ function StudentChat() {
                     .select(`
                         *,
                         companies (
-                            id, logo_url
+                            id, logo_url, company_name
                         ),
-                        job_offers (
+                        offers (
                             title
                         )
                     `)
@@ -47,25 +47,14 @@ function StudentChat() {
 
                 if (error) throw error
 
-                // Get company name from profiles table
-                let companyName = 'Company'
-                if (matchData.company_id) {
-                    const { data: profileData } = await supabase
-                        .from('profiles')
-                        .select('name')
-                        .eq('id', matchData.company_id)
-                        .single()
-
-                    if (profileData) {
-                        companyName = profileData.name
-                    }
-                }
+                // Get company name from joined data
+                const companyName = matchData.companies?.company_name || 'Company'
 
                 setMatchDetails({
                     id: matchData.id,
                     company: companyName,
                     logo: matchData.companies?.logo_url,
-                    title: matchData.job_offers?.title || 'Job Offer',
+                    title: matchData.offers?.title || 'Job Offer',
                     isOnline: false
                 })
             } catch (err) {

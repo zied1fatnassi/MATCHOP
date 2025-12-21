@@ -73,17 +73,16 @@ export function useMatches() {
                 .from('matches')
                 .select(`
                     *,
-                    job_offers (
+                    offers!offer_id (
                         id, title, description, location,
-                        companies (
-                            id, logo_url, sector
+                        companies!company_id (
+                            id, logo_url, industry, company_name
                         )
                     ),
-                    student_profiles (
-                        id, bio, skills
+                    students!student_id (
+                        id, display_name, skills
                     )
                 `)
-                .eq('status', 'active')
                 .order('matched_at', { ascending: false })
 
             if (isStudent) {

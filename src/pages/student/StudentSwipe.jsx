@@ -4,13 +4,16 @@ import SwipeCard from '../../components/SwipeCard'
 import MatchModal from '../../components/MatchModal'
 import OfferDetailModal from '../../components/OfferDetailModal'
 import ApplicationToast from '../../components/ApplicationToast'
+import MatchToast from '../../components/MatchToast'
 import { useApplications } from '../../context/ApplicationContext'
 import { useAuth } from '../../context/AuthContext'
 import { useJobOffers } from '../../hooks/useJobOffers'
+import { useMatchListener } from '../../hooks/useMatchListener'
 import './StudentSwipe.css'
 
 function StudentSwipe() {
     const { offers: realOffers, loading, error, swipe, refresh } = useJobOffers()
+    const { newMatch, clearMatch } = useMatchListener()
     const [offers, setOffers] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [showMatch, setShowMatch] = useState(false)
@@ -190,6 +193,14 @@ function StudentSwipe() {
                 <OfferDetailModal
                     offer={selectedOffer}
                     onClose={() => setSelectedOffer(null)}
+                />
+            )}
+
+            {/* Real-time Match Toast */}
+            {newMatch && (
+                <MatchToast
+                    match={newMatch}
+                    onClose={clearMatch}
                 />
             )}
         </div>

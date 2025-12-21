@@ -22,10 +22,10 @@ export function AuthProvider({ children }) {
         // Timeout protection - if auth takes too long, force loading to complete
         timeoutId = setTimeout(() => {
             if (!didComplete) {
-                console.error('[Auth] TIMEOUT: Auth initialization timed out after 10 seconds')
+                console.error('[Auth] TIMEOUT: Auth initialization timed out after 30 seconds')
                 setIsLoading(false)
             }
-        }, 10000)
+        }, 30000)
 
         // Get initial session
         console.log('[Auth] Calling supabase.auth.getSession()...')
@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
         try {
             let { data, error } = await supabase
                 .from('profiles')
-                .select('*, student_profiles(*), companies(*)')
+                .select('*, students(*), companies(*)')
                 .eq('id', userId)
                 .single()
 
@@ -105,25 +105,24 @@ export function AuthProvider({ children }) {
                             .from('profiles')
                             .insert({
                                 id: userId,
-                                type: type,
-                                name: name,
+                                role: type,
                                 email: user.email
                             })
 
                         if (!insertError) {
                             // Also create type-specific profile
                             if (type === 'student') {
-                                await supabase.from('student_profiles').insert({
+                                await supabase.from('students').insert({
                                     id: userId,
-                                    bio: '',
+                                    display_name: name || 'Student',
                                     location: '',
                                     skills: []
                                 })
                             } else if (type === 'company') {
                                 await supabase.from('companies').insert({
                                     id: userId,
-                                    website: '',
-                                    sector: '',
+                                    company_name: name || 'Company',
+                                    industry: '',
                                     description: ''
                                 })
                             }
@@ -131,7 +130,7 @@ export function AuthProvider({ children }) {
                             // Fetch the newly created profile
                             const result = await supabase
                                 .from('profiles')
-                                .select('*, student_profiles(*), companies(*)')
+                                .select('*, students(*), companies(*)')
                                 .eq('id', userId)
                                 .single()
                             data = result.data
@@ -187,8 +186,7 @@ export function AuthProvider({ children }) {
                 try {
                     const { error: profileError } = await supabase.from('profiles').insert({
                         id: data.user.id,
-                        type: userType,
-                        name: userData.name || 'User',
+                        role: userType,
                         email: email
                     })
 
@@ -198,17 +196,17 @@ export function AuthProvider({ children }) {
 
                     // Create type-specific profile
                     if (userType === 'student') {
-                        await supabase.from('student_profiles').insert({
+                        await supabase.from('students').insert({
                             id: data.user.id,
-                            bio: userData.bio || '',
+                            display_name: userData.name || 'Student',
                             location: userData.location || '',
                             skills: userData.skills || []
                         })
                     } else if (userType === 'company') {
                         await supabase.from('companies').insert({
                             id: data.user.id,
-                            website: userData.website || '',
-                            sector: userData.sector || '',
+                            company_name: userData.name || 'Company',
+                            industry: userData.sector || '',
                             description: userData.description || ''
                         })
                     }
@@ -334,8 +332,8 @@ export function AuthProvider({ children }) {
         profile,
         isLoggedIn: !!user,
         isEmailVerified,
-        isStudent: profile?.type === 'student' || user?.user_metadata?.type === 'student',
-        isCompany: profile?.type === 'company' || user?.user_metadata?.type === 'company',
+        isStudent: profile?.role === 'student' || user?.user_metadata?.type === 'student',
+        isCompany: profile?.role === 'company' || user?.user_metadata?.type === 'company',
         isLoading,
         authError,
         // Auth methods

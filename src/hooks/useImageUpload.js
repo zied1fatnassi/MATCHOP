@@ -2,20 +2,20 @@ import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 /**
- * Hook for uploading and managing profile images in Supabase Storage
- * @param {string} userId - The user's ID
- * @param {string} bucket - The storage bucket name (default: 'avatars')
+ * Hook for uploading profile images to Supabase Storage
+ * 
+ * STORAGE RLS:
+ * - Files are stored in: avatars/{userId}/avatar.{ext}
+ * - Policy allows upload when folder name = auth.uid()
+ * 
+ * TABLE RLS:
+ * - Updates 'students' table (NOT 'profiles') where id = auth.uid()
  */
 export function useImageUpload(userId, bucket = 'avatars') {
     const [uploading, setUploading] = useState(false)
     const [error, setError] = useState(null)
     const [progress, setProgress] = useState(0)
 
-    /**
-     * Upload an image to Supabase Storage
-     * @param {File} file - The file to upload
-     * @returns {Promise<{url: string | null, error: Error | null}>}
-     */
     const uploadImage = useCallback(async (file) => {
         if (!userId) {
             return { url: null, error: new Error('User not authenticated') }
@@ -28,13 +28,13 @@ export function useImageUpload(userId, bucket = 'avatars') {
         // Validate file type
         const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
         if (!validTypes.includes(file.type)) {
-            const err = new Error('Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.')
+            const err = new Error('Invalid file type. Please upload JPEG, PNG, GIF, or WebP.')
             setError(err)
             return { url: null, error: err }
         }
 
         // Validate file size (max 5MB)
-        const maxSize = 5 * 1024 * 1024 // 5MB
+        const maxSize = 5 * 1024 * 1024
         if (file.size > maxSize) {
             const err = new Error('File too large. Maximum size is 5MB.')
             setError(err)
@@ -46,12 +46,22 @@ export function useImageUpload(userId, bucket = 'avatars') {
         setProgress(0)
 
         try {
-            // Generate unique filename
+            // File path: {userId}/avatar.{ext} - folder name MUST equal userId for RLS
             const fileExt = file.name.split('.').pop()
             const fileName = `${userId}/avatar.${fileExt}`
 
-            // Delete existing avatar if any
-            await supabase.storage.from(bucket).remove([`${userId}/avatar.png`, `${userId}/avatar.jpg`, `${userId}/avatar.jpeg`, `${userId}/avatar.webp`, `${userId}/avatar.gif`])
+            // Delete old avatars (ignore errors)
+            try {
+                await supabase.storage.from(bucket).remove([
+                    `${userId}/avatar.png`,
+                    `${userId}/avatar.jpg`,
+                    `${userId}/avatar.jpeg`,
+                    `${userId}/avatar.webp`,
+                    `${userId}/avatar.gif`
+                ])
+            } catch (e) {
+                console.log('No old avatars to delete')
+            }
 
             // Upload new avatar
             const { data, error: uploadError } = await supabase.storage
@@ -62,6 +72,7 @@ export function useImageUpload(userId, bucket = 'avatars') {
                 })
 
             if (uploadError) {
+                console.error('[uploadImage] Storage error:', uploadError)
                 setError(uploadError)
                 return { url: null, error: uploadError }
             }
@@ -73,19 +84,22 @@ export function useImageUpload(userId, bucket = 'avatars') {
 
             const publicUrl = urlData?.publicUrl
 
-            // Update profile with avatar URL
+            // Update STUDENTS table (NOT profiles) - this is where our profile data lives
+            // RLS requires id = auth.uid()
             const { error: updateError } = await supabase
-                .from('profiles')
+                .from('students')
                 .update({ avatar_url: publicUrl })
                 .eq('id', userId)
 
             if (updateError) {
-                console.error('Failed to update profile with avatar URL:', updateError)
+                console.error('[uploadImage] Failed to update students table:', updateError)
+                // Don't fail the whole upload - we still have the URL
             }
 
             setProgress(100)
             return { url: publicUrl, error: null }
         } catch (err) {
+            console.error('[uploadImage] Error:', err)
             setError(err)
             return { url: null, error: err }
         } finally {
@@ -93,10 +107,6 @@ export function useImageUpload(userId, bucket = 'avatars') {
         }
     }, [userId, bucket])
 
-    /**
-     * Delete the current avatar
-     * @returns {Promise<{error: Error | null}>}
-     */
     const deleteImage = useCallback(async () => {
         if (!userId) {
             return { error: new Error('User not authenticated') }
@@ -106,7 +116,6 @@ export function useImageUpload(userId, bucket = 'avatars') {
         setError(null)
 
         try {
-            // Try to delete all possible avatar formats
             await supabase.storage.from(bucket).remove([
                 `${userId}/avatar.png`,
                 `${userId}/avatar.jpg`,
@@ -115,9 +124,9 @@ export function useImageUpload(userId, bucket = 'avatars') {
                 `${userId}/avatar.gif`
             ])
 
-            // Update profile to remove avatar URL
+            // Update STUDENTS table to remove avatar URL
             const { error: updateError } = await supabase
-                .from('profiles')
+                .from('students')
                 .update({ avatar_url: null })
                 .eq('id', userId)
 
@@ -135,31 +144,9 @@ export function useImageUpload(userId, bucket = 'avatars') {
         }
     }, [userId, bucket])
 
-    /**
-     * Get the current avatar URL from the profile
-     * @returns {Promise<string | null>}
-     */
-    const getAvatarUrl = useCallback(async () => {
-        if (!userId) return null
-
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('avatar_url')
-                .eq('id', userId)
-                .single()
-
-            if (error || !data) return null
-            return data.avatar_url
-        } catch {
-            return null
-        }
-    }, [userId])
-
     return {
         uploadImage,
         deleteImage,
-        getAvatarUrl,
         uploading,
         error,
         progress,
