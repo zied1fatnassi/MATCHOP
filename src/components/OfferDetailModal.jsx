@@ -107,10 +107,23 @@ function OfferDetailModal({ offer, onClose }) {
                         <button className="btn btn-secondary" onClick={onClose}>
                             Close
                         </button>
-                        <button className="btn btn-primary">
-                            <Briefcase size={18} />
-                            Apply Now
-                        </button>
+
+                        {offer.isExternal ? (
+                            <a
+                                href={offer.externalUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-primary"
+                            >
+                                <Briefcase size={18} />
+                                Visit Website
+                            </a>
+                        ) : (
+                            <button className="btn btn-primary">
+                                <Briefcase size={18} />
+                                Apply Now
+                            </button>
+                        )}
                     </div>
                 </div>
 

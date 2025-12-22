@@ -23,7 +23,7 @@ function SwipeCard({ offer, onSwipe, isTop, onViewDetails }) {
     const controls = useAnimation() // Initialize animation controls
 
     const handleDragEnd = async (_, info) => {
-        const threshold = 100
+        const threshold = 150 // Increased from 100 for precision
         const velocity = info.velocity.x
 
         if (info.offset.x > threshold || velocity > 500) {
@@ -58,9 +58,13 @@ function SwipeCard({ offer, onSwipe, isTop, onViewDetails }) {
             }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.7}
+            dragElastic={0.5} // Stiffer resistance (was 0.7)
+            dragSnapToOrigin={true} // Always snap back if not swiped
             onDragEnd={handleDragEnd}
-            onClick={() => !x.get() && onViewDetails?.(offer)}
+            onClick={(e) => {
+                // Only trigger if not dragging
+                if (Math.abs(x.get()) < 5) onViewDetails?.(offer)
+            }}
             whileTap={{ cursor: 'grabbing' }}
         >
             {/* Swipe Indicators */}

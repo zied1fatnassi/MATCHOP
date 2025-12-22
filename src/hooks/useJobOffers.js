@@ -33,9 +33,7 @@ export function useJobOffers() {
     const fetchOffers = useCallback(async (forceRefresh = false) => {
         console.log('[useJobOffers] fetchOffers called, user:', user?.id, 'forceRefresh:', forceRefresh)
 
-        // No user - stop loading and return empty
         if (!user) {
-            console.log('[useJobOffers] No user available, setting loading=false')
             if (isMounted.current) {
                 setLoading(false)
                 setOffers([])
@@ -43,12 +41,11 @@ export function useJobOffers() {
             return
         }
 
-        // Check cache first (stale-while-revalidate)
         const now = Date.now()
         const cacheValid = offersCache.data && (now - offersCache.timestamp) < CACHE_TTL
 
         if (cacheValid && !forceRefresh) {
-            console.log('[useJobOffers] Using cached data, setting loading=false')
+            console.log('[useJobOffers] Using cached data')
             const cachedOffers = offersCache.data.filter(
                 o => !offersCache.swipedIds.has(o.id)
             )
@@ -64,9 +61,7 @@ export function useJobOffers() {
             setError(null)
         }
 
-        // TIMEOUT PROTECTION - Force loading to complete after 30 seconds
         const timeoutId = setTimeout(() => {
-            console.error('[useJobOffers] TIMEOUT: Query took too long, forcing loading=false')
             if (isMounted.current) {
                 setLoading(false)
                 setError('Request timed out. Please try again.')
@@ -74,41 +69,13 @@ export function useJobOffers() {
         }, 30000)
 
         try {
-            // STEP 1: Try smart matching via Edge Function
-            console.log('[useJobOffers] Trying get-matched-jobs Edge Function...')
-
-            const { data: matchedData, error: matchError } = await supabase.functions.invoke('get-matched-jobs')
-
-            if (!matchError && matchedData?.success && matchedData?.offers?.length > 0) {
-                console.log('[useJobOffers] Got matched jobs:', matchedData.offers.length, 'method:', matchedData.method)
-
-                // Filter out already swiped
-                const swipeResult = await supabase
-                    .from('student_swipes')
-                    .select('offer_id')
-                    .eq('student_id', user.id)
-
-                const swipedIds = new Set(swipeResult.data?.map(s => s.offer_id) || [])
-                offersCache.swipedIds = swipedIds
-
-                const filteredOffers = matchedData.offers.filter(o => !swipedIds.has(o.id))
-
-                offersCache.data = filteredOffers
-                offersCache.timestamp = now
-
-                clearTimeout(timeoutId)
-                if (isMounted.current) {
-                    setOffers(filteredOffers)
-                    setError(null)
-                    setLoading(false)
-                }
-                return
-            }
-
-            // STEP 2: Fallback to direct query
-            console.log('[useJobOffers] Fallback to direct query...')
-
+            // ==========================================
+            // PART 1: Internal Offers (Prioritized)
+            // ==========================================
+            let internalOffers = []
             let swipedOfferIds = []
+
+            // Get swipes first
             const swipeResult = await supabase
                 .from('student_swipes')
                 .select('offer_id')
@@ -119,48 +86,85 @@ export function useJobOffers() {
                 offersCache.swipedIds = new Set(swipedOfferIds)
             }
 
-            const offersResult = await supabase
-                .from('offers')
-                .select('*, companies!company_id(id, company_name, logo_url, industry)')
-                .eq('status', 'active')
+            // Try Semantic Search
+            const { data: matchedData, error: matchError } = await supabase.functions.invoke('get-matched-jobs')
 
-            if (offersResult.error) {
-                clearTimeout(timeoutId)
-                if (isMounted.current) {
-                    setError(`Failed to load jobs: ${offersResult.error.message}`)
-                    setOffers([])
-                    setLoading(false)
+            if (!matchError && matchedData?.success && matchedData?.offers?.length > 0) {
+                internalOffers = matchedData.offers.filter(o => !offersCache.swipedIds.has(o.id))
+            } else {
+                // Fallback Query
+                const offersResult = await supabase
+                    .from('offers')
+                    .select('*, companies!company_id(id, company_name, logo_url, industry)')
+                    .eq('status', 'active')
+                    .limit(20)
+
+                if (!offersResult.error) {
+                    internalOffers = (offersResult.data || [])
+                        .filter(o => !swipedOfferIds.includes(o.id))
+                        .map(offer => ({
+                            ...offer,
+                            company: offer.companies?.company_name || 'Unknown Company',
+                            companyLogo: offer.companies?.logo_url,
+                            industry: offer.companies?.industry,
+                            salary: offer.salary_range || 'Competitive',
+                            skills: offer.req_skills || [],
+                            matchScore: null
+                        }))
                 }
-                return
             }
 
-            const transformedOffers = (offersResult.data || [])
-                .filter(o => !swipedOfferIds.includes(o.id))
-                .map(offer => ({
-                    ...offer,
-                    company: offer.companies?.company_name || 'Unknown Company',
-                    companyLogo: offer.companies?.logo_url,
-                    industry: offer.companies?.industry,
-                    salary: offer.salary_range || 'Competitive',
-                    skills: offer.req_skills || [],
-                    matchScore: null
-                }))
+            // ==========================================
+            // PART 2: External Jobs (Secondary)
+            // ==========================================
+            let externalOffers = []
+            try {
+                const { data: extData } = await supabase
+                    .from('external_jobs')
+                    .select('*')
+                    .order('posted_at', { ascending: false })
+                    .limit(20)
 
-            offersCache.data = transformedOffers
+                if (extData) {
+                    externalOffers = extData.map(job => ({
+                        id: `ext-${job.id}`, // Flag as external ID
+                        title: job.title,
+                        company: job.company_name,
+                        companyLogo: job.logo_url, // Might be null, UI handles it
+                        location: job.location,
+                        type: job.job_type,
+                        salary: job.salary_range || 'Competitive',
+                        description: job.description,
+                        skills: [], // External jobs might not have parsed skills
+                        isExternal: true, // UI Flag
+                        externalUrl: job.url,
+                        matchScore: null
+                    }))
+                }
+            } catch (extErr) {
+                console.warn('Failed to fetch external jobs:', extErr)
+            }
+
+            // ==========================================
+            // MERGE: Internal First, then External
+            // ==========================================
+            const finalOffers = [...internalOffers, ...externalOffers]
+
+            offersCache.data = finalOffers
             offersCache.timestamp = now
 
             clearTimeout(timeoutId)
             if (isMounted.current) {
-                setOffers(transformedOffers)
+                setOffers(finalOffers)
                 setError(null)
                 setLoading(false)
             }
+
         } catch (err) {
-            console.error('[useJobOffers] Unexpected exception:', err)
+            console.error('[useJobOffers] Unexpected error:', err)
             clearTimeout(timeoutId)
             if (isMounted.current) {
-                setError(err.message || 'Failed to load job offers')
-                setOffers([])
+                setError(err.message || 'Failed to load offers')
                 setLoading(false)
             }
         }
@@ -171,12 +175,17 @@ export function useJobOffers() {
     }, [fetchOffers])
 
     const swipe = useCallback(async (offerId, direction) => {
-        if (!user?.id) {
-            console.log('[useJobOffers] swipe called but no user')
-            return { error: 'Not authenticated' }
-        }
+        if (!user?.id) return { error: 'Not authenticated' }
 
-        console.log('[useJobOffers] Recording swipe:', direction, 'on offer:', offerId, 'for student:', user.id)
+        // Optimistically remove from view
+        setOffers(prev => prev.filter(o => o.id !== offerId))
+        offersCache.swipedIds.add(offerId)
+
+        // For External jobs, we don't save to DB (yet)
+        if (typeof offerId === 'string' && offerId.startsWith('ext-')) {
+            console.log('[useJobOffers] Swiped external job:', offerId, direction)
+            return { error: null }
+        }
 
         const { data, error: swipeError } = await supabase
             .from('student_swipes')
@@ -185,19 +194,13 @@ export function useJobOffers() {
                 offer_id: offerId,
                 direction
             })
-            .select()
-
-        console.log('[useJobOffers] Swipe insert result:', { data, error: swipeError })
 
         if (swipeError) {
-            console.error('[useJobOffers] Swipe insert ERROR:', swipeError.code, swipeError.message)
+            console.error('[useJobOffers] Swipe insert ERROR:', swipeError)
         }
 
-        // Update cache and local state regardless of DB result
-        offersCache.swipedIds.add(offerId)
-        setOffers(prev => prev.filter(o => o.id !== offerId))
-
         return { error: swipeError?.message || null }
+
     }, [user])
 
     return {
