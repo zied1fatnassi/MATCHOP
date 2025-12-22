@@ -73,17 +73,99 @@
     justify-content: center;
 }
 
+/* Hero Badge */
 .hero-badge {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-4);
-    background: var(--glass-surface);
+    background: var(--glass-base);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-full);
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Hero Stats - Glass Card */
+.hero-stats {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    margin-top: var(--space-12);
+    padding: var(--space-6) var(--space-8);
+
+    background: var(--glass-base);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid var(--glass-highlight);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Step Card */
+.step-card {
+    padding: var(--space-8);
+    text-align: center;
+    position: relative;
+    transition: all var(--duration-normal) var(--ease-out);
+
+    background: var(--glass-base);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-md);
+}
+
+.step-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+    background: var(--glass-base-hover);
+    border-color: var(--primary-light);
+}
+
+/* Dashboard Mockup */
+.dashboard-mockup {
+    max-width: 400px;
+    margin: 0 auto;
+    background: var(--glass-base);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+}
+
+/* CTA Card */
+.cta-card {
+    padding: var(--space-12);
+    text-align: center;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(13, 148, 136, 0.05) 100%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-3xl);
+    backdrop-filter: blur(40px);
+    /* Custom heavy blur for large area */
+    box-shadow: var(--shadow-lg);
+}
+
+/* Footer Content */
+.footer-content {
+    text-align: center;
+    background: var(--glass-base);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    padding: var(--space-6) var(--space-12);
+    margin-bottom: var(--space-6);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin-left: 50%;
+    transform: translateX(-50%);
+    box-shadow: var(--shadow-lg);
 }
 
 .hero-title {
@@ -115,17 +197,7 @@
     justify-content: center;
 }
 
-.hero-stats {
-    display: flex;
-    align-items: center;
-    gap: var(--space-6);
-    margin-top: var(--space-8);
-    padding: var(--space-6);
-    background: var(--glass-surface);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--glass-shadow);
-}
+
 
 .stat-item {
     display: flex;
@@ -173,21 +245,7 @@
     gap: var(--space-6);
 }
 
-.step-card {
-    padding: var(--space-8);
-    text-align: center;
-    position: relative;
-    transition: transform 0.2s;
-    background: var(--glass-surface);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-}
 
-.step-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--glass-shadow);
-    border-color: var(--primary);
-}
 
 .step-number {
     position: absolute;
@@ -390,15 +448,7 @@
 }
 
 /* Dashboard Mockup */
-.dashboard-mockup {
-    max-width: 400px;
-    margin: 0 auto;
-    background: var(--glass-surface);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--glass-shadow);
-}
+
 
 .mock-header {
     padding: var(--space-4);
@@ -495,20 +545,7 @@
     padding: var(--space-12) 0;
 }
 
-.footer-content {
-    text-align: center;
-    background: var(--glass-surface);
-    border: 1px solid var(--glass-border);
-    border-radius: 9999px;
-    padding: var(--space-6) var(--space-10);
-    margin-bottom: var(--space-6);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-6);
-    margin-left: 50%;
-    transform: translateX(-50%);
-    box-shadow: var(--glass-shadow);
-}
+
 
 .footer-tagline {
     color: var(--text-secondary);
