@@ -55,7 +55,7 @@ serve(async (req) => {
         const { data: studentData, error: studentError } = await supabaseService
             .from('students')
             .select('embedding')
-            .eq('user_id', user.id)
+            .eq('id', user.id)
             .single()
 
         // Get already swiped offer IDs

@@ -127,7 +127,7 @@ async function storeEmbedding(type: string, id: string, embedding: number[]) {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     const table = type === 'student' ? 'students' : 'offers'
-    const idColumn = type === 'student' ? 'user_id' : 'id'
+    const idColumn = 'id' // Both tables use 'id' as primary key
 
     // Format embedding as pgvector expects: [0.1, 0.2, ...]
     const embeddingString = `[${embedding.join(',')}]`
