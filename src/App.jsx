@@ -6,6 +6,7 @@ import LoadingScreen from './components/LoadingScreen'
 import AuthToast from './components/AuthToast'
 import { ProtectedRoute, PublicRoute } from './components/RouteGuards'
 import { useAuth } from './context/AuthContext'
+import DiagnosticHelper from './components/DiagnosticHelper'
 
 // Lazy load all page components for code splitting
 const Landing = lazy(() => import('./pages/Landing'))
@@ -176,6 +177,7 @@ function App() {
 
       <Navbar />
       <SpeedInsights />
+      <DiagnosticHelper />
       <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           {/* Landing - redirects if logged in */}
