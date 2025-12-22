@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
+import { Analytics } from '@vercel/analytics/react'
 import Navbar from './components/Navbar'
 import LoadingScreen from './components/LoadingScreen'
 import AuthToast from './components/AuthToast'
@@ -188,6 +189,7 @@ function App() {
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar />
         <SpeedInsights />
+        <Analytics />
         <DiagnosticHelper />
 
         <main style={{
