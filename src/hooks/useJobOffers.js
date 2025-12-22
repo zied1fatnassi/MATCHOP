@@ -121,7 +121,7 @@ export function useJobOffers() {
 
             const offersResult = await supabase
                 .from('offers')
-                .select('*, companies!company_id(id, company_name, logo_url, industry, verified, verification_method)')
+                .select('*, companies!company_id(id, company_name, logo_url, industry)')
                 .eq('status', 'active')
 
             if (offersResult.error) {
@@ -140,8 +140,6 @@ export function useJobOffers() {
                     ...offer,
                     company: offer.companies?.company_name || 'Unknown Company',
                     companyLogo: offer.companies?.logo_url,
-                    companyVerified: offer.companies?.verified || false,
-                    companyVerificationMethod: offer.companies?.verification_method || null,
                     industry: offer.companies?.industry,
                     salary: offer.salary_range || 'Competitive',
                     skills: offer.req_skills || [],
