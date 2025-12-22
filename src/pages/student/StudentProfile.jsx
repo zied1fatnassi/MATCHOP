@@ -4,8 +4,9 @@ import {
     Camera, Plus, X, Save, MapPin, Briefcase, Loader2, Calendar, Trash2,
     AlertCircle, CheckCircle, User, Eye, GraduationCap, Award, FolderGit2,
     Languages, Heart, ExternalLink, Building2,
-    FileText, Upload, Download
+    FileText, Upload, Download, Sparkles
 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useStudentProfile } from '../../hooks/useStudentProfile'
 import { useImageUpload } from '../../hooks/useImageUpload'
@@ -135,6 +136,8 @@ function StudentProfile() {
     const [saving, setSaving] = useState(false)
     const [showPreview, setShowPreview] = useState(false)
     const [addingEducation, setAddingEducation] = useState(false)
+    const [aiLoading, setAiLoading] = useState(false)
+    const [aiError, setAiError] = useState('')
 
     // Sync form with loaded profile
     useEffect(() => {
@@ -206,6 +209,37 @@ function StudentProfile() {
         }
     }
     const handleRemoveSkill = (skill) => setFormData(prev => ({ ...prev, skills: prev.skills.filter(s => s !== skill) }))
+
+    // AI Bio Improvement
+    const improveBio = async () => {
+        if (!formData.bio || formData.bio.trim().length < 10) {
+            showError('Please enter at least a short bio first')
+            return
+        }
+        setAiLoading(true)
+        setAiError('')
+        try {
+            const { data, error } = await supabase.functions.invoke('ai-profile-polisher', {
+                body: {
+                    bio: formData.bio,
+                    skills: formData.skills,
+                    headline: formData.headline
+                }
+            })
+            if (error) throw error
+            if (data?.success && data?.bio) {
+                setFormData(prev => ({ ...prev, bio: data.bio }))
+                showSuccess('Bio improved! Review and save.')
+            } else {
+                throw new Error(data?.error || 'Failed to improve bio')
+            }
+        } catch (err) {
+            console.error('AI bio error:', err)
+            setAiError(err.message || 'Failed to improve bio')
+        } finally {
+            setAiLoading(false)
+        }
+    }
 
     // Save profile
     const handleSave = async () => {
@@ -375,6 +409,22 @@ function StudentProfile() {
                 {/* ============ SECTION 2: About ============ */}
                 <ProfileSection icon={User} title="About">
                     <div className="field">
+                        <div className="bio-header">
+                            <label>Tell your story</label>
+                            <button
+                                type="button"
+                                className="ai-improve-btn"
+                                onClick={improveBio}
+                                disabled={aiLoading || !formData.bio || formData.bio.length < 10}
+                            >
+                                {aiLoading ? (
+                                    <><Loader2 size={14} className="spin" /> Improving...</>
+                                ) : (
+                                    <><Sparkles size={14} /> Improve my Bio</>
+                                )}
+                            </button>
+                        </div>
+                        {aiError && <div className="ai-error"><AlertCircle size={14} />{aiError}</div>}
                         <textarea value={formData.bio} onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))} placeholder="Write a summary about yourself, your experience, and career goals..." rows={5} maxLength={2000} />
                         <span className="char-count">{formData.bio.length}/2000</span>
                     </div>
@@ -664,6 +714,12 @@ function StudentProfile() {
                 .field input, .field textarea, .add-row input, .form-grid input, .form-grid select, .add-form textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 15px; transition: all 0.2s; background: #fafafa; }
                 .field input:focus, .field textarea:focus, .add-row input:focus, .form-grid input:focus, .form-grid select:focus, .add-form textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); background: white; }
                 .char-count { display: block; text-align: right; font-size: 12px; color: #9ca3af; margin-top: 4px; }
+                
+                .bio-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+                .ai-improve-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+                .ai-improve-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4); }
+                .ai-improve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+                .ai-error { display: flex; align-items: center; gap: 6px; background: #fef2f2; color: #dc2626; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
                 
                 .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 12px; cursor: pointer; color: #374151; }
                 .checkbox-row input { width: auto; }
