@@ -47,8 +47,8 @@
     align-items: center;
     gap: var(--space-2);
     padding: 0.5rem 1rem;
-    /* Use primary text (Black) since the card is white */
-    color: var(--text-primary);
+    /* Use dark text for light background */
+    color: var(--text-secondary);
     font-weight: 500;
     font-size: 0.95rem;
     border-radius: 9999px;
