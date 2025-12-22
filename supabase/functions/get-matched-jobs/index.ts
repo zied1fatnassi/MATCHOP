@@ -94,9 +94,10 @@ serve(async (req) => {
         // Fallback: Regular query without similarity
         let query = supabaseService
             .from('offers')
-            .select('*, companies!company_id(id, company_name, logo_url, industry, verified, verification_method)')
+            .select('*, companies!company_id(id, company_name, logo_url, industry)')
             .eq('status', 'active')
             .limit(20)
+
 
         if (swipedIds.length > 0) {
             query = query.not('id', 'in', `(${swipedIds.join(',')})`)
@@ -119,8 +120,6 @@ serve(async (req) => {
             ...offer,
             company: offer.companies?.company_name || 'Unknown Company',
             companyLogo: offer.companies?.logo_url,
-            companyVerified: offer.companies?.verified || false,
-            companyVerificationMethod: offer.companies?.verification_method || null,
             industry: offer.companies?.industry,
             salary: offer.salary_range || 'Competitive',
             skills: offer.req_skills || [],
@@ -154,7 +153,7 @@ async function enrichWithCompanyData(supabase: any, matches: any[]) {
 
     const { data: offersWithCompanies } = await supabase
         .from('offers')
-        .select('*, companies!company_id(id, company_name, logo_url, industry, verified, verification_method)')
+        .select('*, companies!company_id(id, company_name, logo_url, industry)')
         .in('id', offerIds)
 
     const offerMap = new Map(offersWithCompanies?.map(o => [o.id, o]) || [])
@@ -165,8 +164,6 @@ async function enrichWithCompanyData(supabase: any, matches: any[]) {
             ...offer,
             company: offer.companies?.company_name || 'Unknown Company',
             companyLogo: offer.companies?.logo_url,
-            companyVerified: offer.companies?.verified || false,
-            companyVerificationMethod: offer.companies?.verification_method || null,
             industry: offer.companies?.industry,
             salary: offer.salary_range || 'Competitive',
             skills: offer.req_skills || [],
