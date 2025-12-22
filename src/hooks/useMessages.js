@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { detectSpam, sanitizeMessage, getSpamErrorMessage } from '../lib/spamDetection'
 
 /**
  * Hook for real-time chat messages
@@ -78,11 +79,24 @@ export function useMessages(matchId) {
             return { error: 'Invalid message' }
         }
 
+        // Sanitize and check for spam
+        const cleanContent = sanitizeMessage(content)
+        const spamCheck = detectSpam(cleanContent)
+
+        if (spamCheck.isSpam) {
+            console.warn('[Messages] Spam detected:', spamCheck.reason)
+            return {
+                error: getSpamErrorMessage(spamCheck.severity),
+                isSpam: true,
+                severity: spamCheck.severity
+            }
+        }
+
         try {
             const newMessage = {
                 match_id: matchId,
                 sender_id: user.id,
-                content: content.trim()
+                content: cleanContent
             }
 
             const { data, error: sendError } = await supabase

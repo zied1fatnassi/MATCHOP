@@ -1,0 +1,271 @@
+/* Report Modal Styles */
+
+.report-modal {
+    max-width: 600px;
+    width: 90%;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: var(--space-6);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.header-content h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+}
+
+.warning-icon {
+    color: var(--accent-red);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(var(--accent-red), 0.1);
+    color: var(--accent-red);
+}
+
+/* Report Form */
+
+.report-form .form-group {
+    margin-bottom: var(--space-6);
+}
+
+.report-form label {
+    display: block;
+    margin-bottom: var(--space-3);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.reason-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.reason-option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 2px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reason-option:hover {
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.reason-option.selected {
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.1);
+}
+
+.reason-option input[type="radio"] {
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.reason-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.reason-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.reason-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Textarea */
+
+.report-form textarea {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-lg);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 100px;
+    transition: border-color 0.2s;
+}
+
+.report-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.char-count {
+    display: block;
+    text-align: right;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: var(--space-1);
+}
+
+/* Disclaimer */
+
+.report-disclaimer {
+    padding: var(--space-3);
+    background: rgba(var(--accent-red), 0.05);
+    border-left: 3px solid var(--accent-red);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+}
+
+.report-disclaimer p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.report-disclaimer strong {
+    color: var(--text-primary);
+}
+
+/* Modal Actions */
+
+.modal-actions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--glass-border);
+}
+
+.modal-actions .btn {
+    padding: 0.75rem 1.5rem;
+}
+
+.btn-danger {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Success State */
+
+.report-success {
+    text-align: center;
+    padding: var(--space-8);
+}
+
+.success-icon {
+    color: #10b981;
+    margin-bottom: var(--space-4);
+    animation: scaleIn 0.4s ease-out;
+}
+
+.report-success h2 {
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.report-success p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Dark Mode Adjustments */
+
+[data-theme='dark'] .reason-option {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .reason-option:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+[data-theme='dark'] .report-disclaimer {
+    background: rgba(220, 38, 38, 0.1);
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+    .report-modal {
+        width: 95%;
+        max-width: none;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+
+    .reason-option {
+        padding: var(--space-3);
+    }
+
+    .reason-label {
+        font-size: 0.9rem;
+    }
+
+    .reason-description {
+        font-size: 0.8rem;
+    }
+}

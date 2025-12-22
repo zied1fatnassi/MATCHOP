@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { autoVerifyEmail } from '../lib/verification'
 
 /**
  * Auth Context for managing user authentication state with Supabase
@@ -132,6 +133,19 @@ export function AuthProvider({ children }) {
             console.error('Error fetching profile:', err)
         }
     }, [])
+
+    // Auto-verify email when user confirms their email
+    useEffect(() => {
+        if (user?.email_confirmed_at && profile && !profile.verified) {
+            console.log('[Auth] Auto-verifying email for user:', user.id)
+            autoVerifyEmail(user.id, user.email_confirmed_at).then(result => {
+                if (result.success) {
+                    console.log('[Auth] Email verification badge added')
+                    fetchProfile(user.id) // Refresh profile to show badge
+                }
+            })
+        }
+    }, [user, profile, fetchProfile])
 
     /**
      * Sign up a new user with Supabase Auth

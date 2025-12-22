@@ -1,11 +1,22 @@
-import { X, MapPin, DollarSign, Clock, Building2, Briefcase } from 'lucide-react'
+import { useState } from 'react'
+import { X, MapPin, DollarSign, Clock, Building2, Briefcase, Flag } from 'lucide-react'
+import ReportModal from './ReportModal'
 import './OfferDetailModal.css'
 
 /**
  * Modal showing full job offer details when clicking on a swipe card
  */
 function OfferDetailModal({ offer, onClose }) {
+    const [showReport, setShowReport] = useState(false)
+
     if (!offer) return null
+
+    // Extract company info for reporting
+    const companyProfile = {
+        id: offer.company_id,
+        name: offer.company || offer.companies?.company_name,
+        type: 'company'
+    }
 
     return (
         <div className="offer-modal-overlay" onClick={onClose}>
@@ -84,14 +95,32 @@ function OfferDetailModal({ offer, onClose }) {
 
                 {/* Actions */}
                 <div className="offer-modal-actions">
-                    <button className="btn btn-secondary" onClick={onClose}>
-                        Close
+                    <button
+                        className="btn btn-text report-btn"
+                        onClick={() => setShowReport(true)}
+                        title="Report this job posting"
+                    >
+                        <Flag size={18} />
+                        Report
                     </button>
-                    <button className="btn btn-primary">
-                        <Briefcase size={18} />
-                        Apply Now
-                    </button>
+                    <div className="action-buttons">
+                        <button className="btn btn-secondary" onClick={onClose}>
+                            Close
+                        </button>
+                        <button className="btn btn-primary">
+                            <Briefcase size={18} />
+                            Apply Now
+                        </button>
+                    </div>
                 </div>
+
+                {/* Report Modal */}
+                {showReport && (
+                    <ReportModal
+                        reportedUser={companyProfile}
+                        onClose={() => setShowReport(false)}
+                    />
+                )}
             </div>
         </div>
     )

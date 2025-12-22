@@ -1,0 +1,34 @@
+/* Theme Toggle Button - Add to Navbar.css */
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(var(--primary-rgb, 37, 99, 235), 0.1);
+    transform: scale(1.05);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+/* Dark mode specific styling */
+[data-theme='dark'] .theme-toggle-btn {
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme='dark'] .theme-toggle-btn:hover {
+    background: rgba(251, 191, 36, 0.1);
+}

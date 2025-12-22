@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { useBlocking } from './useBlocking'
+
 
 // Simple in-memory cache for job offers
 const offersCache = {
@@ -22,8 +22,8 @@ export function useJobOffers() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const { user, isStudent } = useAuth()
-    const { blockedUsers } = useBlocking()  // Get blocked users list
     const isMounted = useRef(true)
+
 
     useEffect(() => {
         isMounted.current = true

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, X, User, Briefcase, Heart, Home, LogOut, Globe, ChevronDown } from 'lucide-react'
+import { Menu, X, User, Briefcase, Heart, Home, LogOut, Globe, ChevronDown, Moon, Sun } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import Logo from './Logo'
 import './Navbar.css'
 
@@ -20,6 +21,12 @@ function Navbar() {
     const navigate = useNavigate()
     const { t, i18n } = useTranslation()
     const { isLoggedIn, isStudent, isCompany, isLoading, signOut, user } = useAuth()
+    const { theme, setTheme, isDark } = useTheme()
+
+    // Toggle between light and dark modes
+    const toggleTheme = () => {
+        setTheme(theme === 'dark' ? 'light' : 'dark')
+    }
 
     const studentLinks = [
         { to: '/student/matches', icon: <Heart size={18} />, label: t('nav.matches') },
@@ -115,6 +122,15 @@ function Navbar() {
                             </div>
                         )}
                     </div>
+
+                    {/* Theme Toggle */}
+                    <button
+                        className="theme-toggle-btn"
+                        onClick={toggleTheme}
+                        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                    >
+                        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                    </button>
 
                     {/* Auth Buttons (when not logged in and not loading) */}
                     {!isLoggedIn && !isLoading && (

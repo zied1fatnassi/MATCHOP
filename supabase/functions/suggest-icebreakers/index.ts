@@ -22,11 +22,34 @@ serve(async (req) => {
         }
 
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-        const supabase = createClient(supabaseUrl, supabaseKey)
+        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-        // 1. Fetch Match Details (Student & Job)
-        const { data: match, error: matchError } = await supabase
+        // 1. Authenticate User
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 401,
+            })
+        }
+
+        const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: authHeader } }
+        })
+
+        const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
+        if (authError || !user) {
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 401,
+            })
+        }
+
+        const supabaseService = createClient(supabaseUrl, supabaseServiceKey)
+
+        // 2. Fetch Match Details & Verify Ownership
+        const { data: match, error: matchError } = await supabaseService
             .from('matches')
             .select(`
                 student_id,
@@ -41,6 +64,7 @@ serve(async (req) => {
                     title,
                     description,
                     req_skills,
+                    company_id,
                     companies (
                         company_name
                     )
@@ -53,6 +77,17 @@ serve(async (req) => {
             return new Response(JSON.stringify({ error: 'Match not found' }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 404,
+            })
+        }
+
+        // Security Check: User must be the student OR the company
+        const isStudent = match.student_id === user.id
+        const isCompany = match.offers?.company_id === user.id
+
+        if (!isStudent && !isCompany) {
+            return new Response(JSON.stringify({ error: 'Forbidden: You are not part of this match' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 403,
             })
         }
 
