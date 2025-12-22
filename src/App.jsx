@@ -1,5 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import Navbar from './components/Navbar'
 import LoadingScreen from './components/LoadingScreen'
 import AuthToast from './components/AuthToast'
@@ -174,6 +175,7 @@ function App() {
       )}
 
       <Navbar />
+      <SpeedInsights />
       <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           {/* Landing - redirects if logged in */}
