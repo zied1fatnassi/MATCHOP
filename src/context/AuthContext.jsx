@@ -14,54 +14,34 @@ export function AuthProvider({ children }) {
     const [authError, setAuthError] = useState(null)
 
     useEffect(() => {
-        let timeoutId = null
-        let didComplete = false
-
         console.log('[Auth] Starting auth initialization...')
 
-        // Timeout protection - if auth takes too long, force loading to complete
-        timeoutId = setTimeout(() => {
-            if (!didComplete) {
-                console.error('[Auth] TIMEOUT: Auth initialization timed out after 30 seconds')
-                setIsLoading(false)
-            }
-        }, 30000)
+        // Simple timeout fallback - set loading to false after 5 seconds max
+        const timeoutId = setTimeout(() => {
+            console.log('[Auth] Safety timeout - setting loading=false after 5s')
+            setIsLoading(false)
+        }, 5000)
 
-        // Get initial session
-        console.log('[Auth] Calling supabase.auth.getSession()...')
+        // Get initial session (non-blocking)
         supabase.auth.getSession().then(async ({ data, error }) => {
-            didComplete = true
-            clearTimeout(timeoutId)
-
             console.log('[Auth] getSession result:', {
                 hasSession: !!data?.session,
                 userId: data?.session?.user?.id,
-                userEmail: data?.session?.user?.email,
-                error: error
+                error: error?.message
             })
 
-            if (error) {
-                console.error('[Auth] getSession ERROR:', error.code, error.message)
-                setIsLoading(false)
-                return
+            if (data?.session?.user) {
+                setUser(data.session.user)
+                // Fetch profile in background, don't block
+                fetchProfile(data.session.user.id)
             }
 
-            const session = data?.session
-            setUser(session?.user ?? null)
-
-            if (session?.user) {
-                console.log('[Auth] User found, fetching profile...')
-                // Wait for profile fetch before setting loading to false
-                await fetchProfile(session.user.id)
-                console.log('[Auth] Profile fetch complete, setting loading=false')
-            } else {
-                console.log('[Auth] No session, setting loading=false')
-            }
+            // Always set loading to false
+            clearTimeout(timeoutId)
             setIsLoading(false)
         }).catch(err => {
-            didComplete = true
+            console.error('[Auth] getSession ERROR:', err)
             clearTimeout(timeoutId)
-            console.error('[Auth] getSession EXCEPTION:', err)
             setIsLoading(false)
         })
 
@@ -70,8 +50,10 @@ export function AuthProvider({ children }) {
             async (event, session) => {
                 console.log('[Auth] onAuthStateChange:', event, session?.user?.id)
                 setUser(session?.user ?? null)
+
                 if (session?.user) {
-                    await fetchProfile(session.user.id)
+                    // Fetch profile in background
+                    fetchProfile(session.user.id)
                 } else {
                     setProfile(null)
                 }
@@ -83,7 +65,10 @@ export function AuthProvider({ children }) {
             }
         )
 
-        return () => subscription.unsubscribe()
+        return () => {
+            clearTimeout(timeoutId)
+            subscription.unsubscribe()
+        }
     }, [])
 
     const fetchProfile = useCallback(async (userId) => {
