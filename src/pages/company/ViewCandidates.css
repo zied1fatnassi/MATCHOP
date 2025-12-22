@@ -14,13 +14,14 @@
 }
 
 .header-left h1 {
-    font-size: var(--font-size-3xl);
+    font-size: 2rem;
     font-weight: 700;
     margin-bottom: var(--space-1);
+    color: var(--text-primary);
 }
 
 .header-left p {
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
 }
 
 .header-actions {
@@ -30,7 +31,7 @@
 
 .view-toggle {
     display: flex;
-    background: var(--glass-bg);
+    background: var(--glass-surface);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -38,12 +39,16 @@
 
 .toggle-btn {
     padding: var(--space-2) var(--space-3);
-    color: rgba(255, 255, 255, 0.75);
-    transition: all var(--transition-fast);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+    cursor: pointer;
 }
 
 .toggle-btn:hover {
-    color: white;
+    color: var(--primary);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .toggle-btn.active {
@@ -66,12 +71,18 @@
 
 .candidate-card {
     padding: var(--space-6);
-    transition: all var(--transition-base);
+    background: var(--glass-surface);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--glass-shadow);
+    transition: all 0.2s;
 }
 
 .candidate-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary);
 }
 
 .candidate-header {
@@ -86,12 +97,13 @@
     width: 64px;
     height: 64px;
     border-radius: var(--radius-full);
-    background: var(--accent-gradient);
+    background: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-2xl);
+    font-size: 1.5rem;
     font-weight: 700;
+    color: white;
     overflow: hidden;
 }
 
@@ -107,8 +119,8 @@
     right: -2px;
     width: 24px;
     height: 24px;
-    background: var(--accent-blue);
-    border: 2px solid var(--gray-900);
+    background: var(--accent-teal);
+    border: 2px solid white;
     border-radius: var(--radius-full);
     display: flex;
     align-items: center;
@@ -123,36 +135,38 @@
 }
 
 .score-value {
-    font-size: var(--font-size-2xl);
+    font-size: 1.5rem;
     font-weight: 700;
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary);
 }
 
 .score-label {
-    font-size: var(--font-size-xs);
-    color: var(--gray-500);
+    font-size: 0.7rem;
+    color: var(--text-muted);
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .candidate-info h3 {
-    font-size: var(--font-size-xl);
+    font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: var(--space-1);
+    color: var(--text-primary);
 }
 
 .candidate-title {
-    color: var(--primary-light);
-    font-size: var(--font-size-sm);
+    color: var(--primary);
+    font-size: 0.9rem;
     font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
 }
 
 .candidate-university {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
     margin-bottom: var(--space-3);
+    display: block;
 }
 
 .candidate-skills {
@@ -164,18 +178,18 @@
 
 .skill-badge {
     padding: var(--space-1) var(--space-2);
-    background: rgba(33, 150, 243, 0.15);
-    color: var(--primary-light);
-    font-size: var(--font-size-xs);
-    font-weight: 500;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 600;
     border-radius: var(--radius-full);
 }
 
 .candidate-bio {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
     line-height: 1.6;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-6);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -197,8 +211,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-spring);
+    transition: all 0.2s;
     border: 2px solid;
+    cursor: pointer;
 }
 
 .candidate-actions .action-btn:hover {
@@ -206,26 +221,34 @@
 }
 
 .candidate-actions .action-btn.pass {
-    background: var(--glass-bg);
+    background: transparent;
     border-color: var(--accent-red);
     color: var(--accent-red);
 }
 
+.candidate-actions .action-btn.pass:hover {
+    background: rgba(220, 38, 38, 0.1);
+}
+
 .candidate-actions .action-btn.view {
-    background: var(--glass-bg);
-    border-color: var(--gray-400);
-    color: rgba(255, 255, 255, 0.75);
+    background: transparent;
+    border-color: var(--glass-border);
+    color: var(--text-secondary);
 }
 
 .candidate-actions .action-btn.view:hover {
-    border-color: white;
-    color: white;
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .candidate-actions .action-btn.like {
-    background: var(--glass-bg);
-    border-color: var(--accent-green);
-    color: var(--accent-green);
+    background: transparent;
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
+}
+
+.candidate-actions .action-btn.like:hover {
+    background: rgba(13, 148, 136, 0.1);
 }
 
 .no-candidates {
@@ -238,16 +261,18 @@
 .empty-icon {
     font-size: 64px;
     margin-bottom: var(--space-4);
+    color: var(--text-muted);
 }
 
 .no-candidates h2 {
-    font-size: var(--font-size-2xl);
+    font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: var(--space-2);
+    color: var(--text-primary);
 }
 
 .no-candidates p {
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
 }
 
 @media (max-width: 640px) {

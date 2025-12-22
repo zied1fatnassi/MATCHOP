@@ -3,12 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Camera, Plus, X, Save, MapPin, Briefcase, Loader2, Calendar, Trash2,
     AlertCircle, CheckCircle, User, Eye, GraduationCap, Award, FolderGit2,
-    Languages, Heart, ExternalLink, Building2
+    Languages, Heart, ExternalLink, Building2,
+    FileText, Upload, Download
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useStudentProfile } from '../../hooks/useStudentProfile'
 import { useImageUpload } from '../../hooks/useImageUpload'
+import { useCVUpload } from '../../hooks/useCVUpload'
 import { useToast } from '../../hooks/useLoadingError'
+import { TUNISIAN_UNIVERSITIES } from '../../lib/validation'
+import { FormLocationSelector, FormEducationSelector } from '../../components/forms/FormComponents'
+import SuggestionInput from '../../components/forms/SuggestionInput'
+import { JOB_TITLES } from '../../data/jobTitles'
+import { TUNISIAN_COMPANIES } from '../../data/companies'
+import { ALL_SKILLS } from '../../data/skills'
 import ErrorToast from '../../components/ErrorToast'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import './StudentProfile.css'
@@ -105,12 +113,14 @@ function StudentProfile() {
         addVolunteer, removeVolunteer
     } = useStudentProfile()
     const { uploadImage, uploading } = useImageUpload(user?.id)
+    const { uploadCV, uploading: uploadingCV } = useCVUpload(user?.id)
     const { toast, showError, showSuccess, hideToast } = useToast()
     const fileInputRef = useRef(null)
+    const cvInputRef = useRef(null)
 
     // Form data for profile header
     const [formData, setFormData] = useState({
-        display_name: '', headline: '', bio: '', location: '', skills: [], avatar_url: '', open_to_work: false
+        display_name: '', headline: '', bio: '', location: '', skills: [], avatar_url: '', open_to_work: false, cv_url: ''
     })
     const [newSkill, setNewSkill] = useState('')
 
@@ -136,7 +146,8 @@ function StudentProfile() {
                 location: profile.location || '',
                 skills: profile.skills || [],
                 avatar_url: profile.avatar_url || '',
-                open_to_work: profile.open_to_work || false
+                open_to_work: profile.open_to_work || false,
+                cv_url: profile.cv_url || ''
             })
         }
     }, [profile])
@@ -149,6 +160,42 @@ function StudentProfile() {
         if (error) showError(error.message || 'Failed to upload')
         else if (url) { setFormData(prev => ({ ...prev, avatar_url: url })); showSuccess('Avatar uploaded!') }
     }
+
+
+
+
+
+    // CV upload
+    const handleCVUpload = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        // 5MB limit
+        if (file.size > 5 * 1024 * 1024) {
+            showError('File too large (Max 5MB)')
+            return
+        }
+
+        try {
+            const { url, error } = await uploadCV(file)
+            if (error) throw error
+
+            if (url) {
+                setFormData(prev => ({ ...prev, cv_url: url }))
+                // Auto-save to profile
+                const { error: saveError } = await updateProfile({ ...formData, cv_url: url })
+                if (saveError) showError('Uploaded but failed to save profile')
+                else showSuccess('CV uploaded successfully!')
+            }
+        } catch (error) {
+            showError('Failed to upload CV')
+            console.error(error)
+        }
+    }
+
+
+    // CV upload
+
 
     // Skills
     const handleAddSkill = () => {
@@ -233,7 +280,7 @@ function StudentProfile() {
     if (error) return <div className="profile-page"><div className="error-state"><AlertCircle size={64} /><h2>Failed to Load</h2><p>{error}</p><button onClick={() => window.location.reload()}>Reload</button></div></div>
 
     return (
-        <div className="profile-page">
+        <div className="profile-page animate-fade-in-up">
             <div className="profile-container">
                 {/* Header */}
                 <header className="profile-header">
@@ -261,13 +308,68 @@ function StudentProfile() {
                         <input type="text" value={formData.headline} onChange={e => setFormData(prev => ({ ...prev, headline: e.target.value }))} placeholder="e.g. Full Stack Developer | React & Node.js" />
                     </div>
                     <div className="field">
-                        <label><MapPin size={16} /> Location</label>
-                        <input type="text" value={formData.location} onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))} placeholder="Tunis, Tunisia" />
+                        <FormLocationSelector
+                            label="Localisation / Location"
+                            governorateValue={formData.governorate}
+                            cityValue={formData.location} // Storing city in 'location' field for backward compatibility
+                            onGovernorateChange={(val) => setFormData(prev => ({ ...prev, governorate: val }))}
+                            onCityChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
+                        />
                     </div>
-                    <label className="checkbox-row">
-                        <input type="checkbox" checked={formData.open_to_work} onChange={e => setFormData(prev => ({ ...prev, open_to_work: e.target.checked }))} />
-                        🟢 Open to work
+                </ProfileSection>
+
+                {/* Switch for Open to Work */}
+                <div className={`toggle-wrapper ${formData.open_to_work ? 'active' : ''}`}>
+                    <div className="toggle-label">
+                        Open to Work
+                        <span className="status-badge">
+                            {formData.open_to_work ? 'Available' : 'Not Looking'}
+                        </span>
+                    </div>
+                    <label className="switch">
+                        <input
+                            type="checkbox"
+                            checked={formData.open_to_work}
+                            onChange={e => setFormData(prev => ({ ...prev, open_to_work: e.target.checked }))}
+                        />
+                        <span className="slider"></span>
                     </label>
+                </div>
+
+                {/* ============ SECTION: CV / Resume ============ */}
+                <ProfileSection icon={FileText} title="CV / Resume">
+                    <div className="cv-upload-area">
+                        {formData.cv_url ? (
+                            <div className="cv-display">
+                                <FileText size={48} className="cv-icon" />
+                                <div className="cv-info">
+                                    <span className="cv-label">Current CV</span>
+                                    <div className="cv-actions">
+                                        <a href={formData.cv_url} target="_blank" rel="noopener noreferrer" className="view-cv-btn">
+                                            <Download size={14} /> Download / View
+                                        </a>
+                                        <button onClick={() => cvInputRef.current?.click()} className="change-cv-btn">
+                                            Change
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="cv-placeholder" onClick={() => cvInputRef.current?.click()}>
+                                <div className="placeholder-icon"><Upload size={24} /></div>
+                                <p>Upload your CV / Resume</p>
+                                <span>PDF or Word (Max 5MB)</span>
+                            </div>
+                        )}
+                        <input
+                            ref={cvInputRef}
+                            type="file"
+                            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            onChange={handleCVUpload}
+                            hidden
+                        />
+                        {uploadingCV && <div className="uploading-overlay"><Loader2 className="spin" /> Uploading...</div>}
+                    </div>
                 </ProfileSection>
 
                 {/* ============ SECTION 2: About ============ */}
@@ -299,8 +401,18 @@ function StudentProfile() {
                     <div className="add-form">
                         <h4><Plus size={16} /> Add Experience</h4>
                         <div className="form-grid">
-                            <input type="text" placeholder="Job Title *" value={newExp.job_title} onChange={e => setNewExp(prev => ({ ...prev, job_title: e.target.value }))} />
-                            <input type="text" placeholder="Company *" value={newExp.company} onChange={e => setNewExp(prev => ({ ...prev, company: e.target.value }))} />
+                            <SuggestionInput
+                                placeholder="Job Title *"
+                                value={newExp.job_title}
+                                onChange={val => setNewExp(prev => ({ ...prev, job_title: val }))}
+                                options={JOB_TITLES}
+                            />
+                            <SuggestionInput
+                                placeholder="Company *"
+                                value={newExp.company}
+                                onChange={val => setNewExp(prev => ({ ...prev, company: val }))}
+                                options={TUNISIAN_COMPANIES}
+                            />
                             <input type="month" placeholder="Start Date *" value={newExp.start_date} onChange={e => setNewExp(prev => ({ ...prev, start_date: e.target.value }))} />
                             <input type="month" placeholder="End Date" value={newExp.end_date} onChange={e => setNewExp(prev => ({ ...prev, end_date: e.target.value }))} disabled={newExp.is_current} />
                         </div>
@@ -330,10 +442,28 @@ function StudentProfile() {
                     <div className="add-form">
                         <h4><Plus size={16} /> Add Education</h4>
                         <div className="form-grid">
-                            <input type="text" placeholder="School *" value={newEdu.school} onChange={e => setNewEdu(prev => ({ ...prev, school: e.target.value }))} />
-                            <input type="text" placeholder="Degree" value={newEdu.degree} onChange={e => setNewEdu(prev => ({ ...prev, degree: e.target.value }))} />
-                            <input type="text" placeholder="Field of Study" value={newEdu.field_of_study} onChange={e => setNewEdu(prev => ({ ...prev, field_of_study: e.target.value }))} />
+                            <input
+                                type="text"
+                                list="education-schools"
+                                placeholder="ESPRIT, INSAT, Université de Tunis..."
+                                value={newEdu.school}
+                                onChange={e => setNewEdu(prev => ({ ...prev, school: e.target.value }))}
+                            />
+                            <datalist id="education-schools">
+                                {TUNISIAN_UNIVERSITIES.map(uni => (
+                                    <option key={uni} value={uni} />
+                                ))}
+                            </datalist>
+
+                            <FormEducationSelector
+                                degreeValue={newEdu.degree}
+                                programValue={newEdu.field_of_study}
+                                onDegreeChange={(val) => setNewEdu(prev => ({ ...prev, degree: val }))}
+                                onProgramChange={(val) => setNewEdu(prev => ({ ...prev, field_of_study: val }))}
+                            />
+
                             <input type="month" placeholder="Start Date" value={newEdu.start_date} onChange={e => setNewEdu(prev => ({ ...prev, start_date: e.target.value }))} />
+
                             <input type="month" placeholder="End Date" value={newEdu.end_date} onChange={e => setNewEdu(prev => ({ ...prev, end_date: e.target.value }))} disabled={newEdu.is_current} />
                         </div>
                         <label className="checkbox-row"><input type="checkbox" checked={newEdu.is_current} onChange={e => setNewEdu(prev => ({ ...prev, is_current: e.target.checked, end_date: '' }))} /> Currently studying here</label>
@@ -374,14 +504,27 @@ function StudentProfile() {
                 </ProfileSection>
 
                 {/* ============ SECTION 6: Skills ============ */}
+
                 <ProfileSection icon={CheckCircle} title="Skills">
                     <div className="skills-container">
                         {formData.skills.length > 0 ? formData.skills.map(skill => (
                             <span key={skill} className="skill-chip">{skill}<button onClick={() => handleRemoveSkill(skill)}><X size={14} /></button></span>
                         )) : <span className="empty-text">No skills added yet</span>}
                     </div>
-                    <div className="add-row">
-                        <input type="text" value={newSkill} onChange={e => setNewSkill(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())} placeholder="Add a skill (e.g. React, Python)" />
+                    <div className="skills-input-container">
+                        <div className="skills-input-wrapper">
+                            <SuggestionInput
+                                placeholder="Add a skill (e.g. Python, Leadership...)"
+                                value={newSkill}
+                                onChange={setNewSkill}
+                                onSelect={(val) => {
+                                    setNewSkill(val)
+                                    // Optional: auto-add on select
+                                }}
+                                onEnter={handleAddSkill}
+                                options={ALL_SKILLS}
+                            />
+                        </div>
                         <button onClick={handleAddSkill} className="add-btn"><Plus size={16} /> Add</button>
                     </div>
                 </ProfileSection>
@@ -601,6 +744,28 @@ function StudentProfile() {
                 .preview-exp-company { display: block; color: #3b82f6; font-size: 13px; }
                 .preview-exp-date { display: block; color: #9ca3af; font-size: 11px; margin-top: 2px; }
                 .preview-hint { text-align: center; color: #9ca3af; font-size: 12px; padding: 14px; border-top: 1px solid #f3f4f6; margin: 0; }
+                
+                /* CV Section */
+                .cv-upload-area { position: relative; }
+                .cv-display { display: flex; align-items: center; gap: 16px; background: #f9fafb; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; }
+                .cv-icon { color: #dc2626; } /* Red for PDF vibe */
+                .cv-info { flex: 1; }
+                .cv-label { display: block; font-weight: 600; color: #374151; font-size: 15px; margin-bottom: 6px; }
+                .cv-actions { display: flex; gap: 8px; }
+                .view-cv-btn, .change-cv-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 12px; border-radius: 8px; font-weight: 500; cursor: pointer; text-decoration: none; }
+                .view-cv-btn { background: #eff6ff; color: #3b82f6; }
+                .view-cv-btn:hover { background: #dbeafe; }
+                .change-cv-btn { background: white; border: 1px solid #d1d5db; color: #4b5563; }
+                .change-cv-btn:hover { background: #f3f4f6; }
+                
+                .cv-placeholder { border: 2px dashed #d1d5db; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+                .cv-placeholder:hover { border-color: #3b82f6; background: #eff6ff; }
+                .placeholder-icon { width: 48px; height: 48px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: #9ca3af; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+                .cv-placeholder:hover .placeholder-icon { color: #3b82f6; }
+                .cv-placeholder p { color: #374151; font-weight: 600; margin: 0 0 4px; }
+                .cv-placeholder span { color: #9ca3af; font-size: 13px; }
+                
+                .uploading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; gap: 8px; color: #3b82f6; font-weight: 600; border-radius: 12px; }
             `}</style>
         </div>
     )

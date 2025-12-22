@@ -104,7 +104,7 @@ function CompanyLogin() {
                                         type="email"
                                         name="email"
                                         className="input"
-                                        placeholder="you@company.com"
+                                        placeholder="hr@vermeg.tn"
                                         value={formData.email}
                                         onChange={handleChange}
                                         disabled={isLoading}

@@ -3,6 +3,7 @@
     display: flex;
     flex-direction: column;
     padding-top: 60px;
+    background: transparent;
 }
 
 .chat-header {
@@ -10,22 +11,22 @@
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
-    border-radius: 0;
-    border-top: none;
-    border-left: none;
-    border-right: none;
+    background: var(--glass-surface);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+    z-index: 10;
 }
 
 .back-btn {
     padding: var(--space-2);
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
     border-radius: var(--radius-lg);
-    transition: all var(--transition-fast);
+    transition: all 0.2s;
 }
 
 .back-btn:hover {
-    color: white;
-    background: var(--glass-bg);
+    color: var(--primary);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .chat-user {
@@ -40,12 +41,13 @@
     width: 44px;
     height: 44px;
     border-radius: var(--radius-full);
-    background: var(--accent-gradient);
+    background: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-lg);
+    font-size: 1.1rem;
     font-weight: 700;
+    color: white;
     overflow: hidden;
 }
 
@@ -61,19 +63,21 @@
     right: 0;
     width: 12px;
     height: 12px;
-    background: var(--accent-green);
-    border: 2px solid var(--gray-900);
+    background: var(--accent-teal);
+    border: 2px solid white;
     border-radius: var(--radius-full);
 }
 
 .chat-user-info h3 {
-    font-size: var(--font-size-base);
+    font-size: 1rem;
     font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
 }
 
 .chat-user-info .status {
-    font-size: var(--font-size-xs);
-    color: var(--accent-green);
+    font-size: 0.8rem;
+    color: var(--accent-teal);
 }
 
 .chat-actions {
@@ -83,20 +87,22 @@
 
 .action-icon {
     padding: var(--space-2);
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-muted);
     border-radius: var(--radius-lg);
-    transition: all var(--transition-fast);
+    transition: all 0.2s;
 }
 
 .action-icon:hover {
-    color: white;
-    background: var(--glass-bg);
+    color: var(--primary);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .chat-messages {
     flex: 1;
     overflow-y: auto;
     padding: var(--space-4);
+    background: rgba(255, 255, 255, 0.5);
+    /* Slight fill */
 }
 
 .messages-container {
@@ -106,8 +112,8 @@
 
 .chat-date {
     text-align: center;
-    font-size: var(--font-size-xs);
-    color: var(--gray-500);
+    font-size: 0.8rem;
+    color: var(--text-muted);
     margin: var(--space-4) 0;
     position: relative;
 }
@@ -135,56 +141,59 @@
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-4);
-    background: rgba(15, 12, 41, 0.8);
+    background: var(--glass-surface);
     backdrop-filter: blur(20px);
     border-top: 1px solid var(--glass-border);
 }
 
 .attach-btn {
     padding: var(--space-2);
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
     border-radius: var(--radius-lg);
-    transition: all var(--transition-fast);
+    transition: all 0.2s;
 }
 
 .attach-btn:hover {
-    color: white;
-    background: var(--glass-bg);
+    color: var(--primary);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .chat-input {
     flex: 1;
     padding: var(--space-3) var(--space-4);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: var(--radius-full);
-    color: white;
-    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    font-size: 1rem;
 }
 
 .chat-input:focus {
     outline: none;
     border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .chat-input::placeholder {
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 .send-btn {
     width: 44px;
     height: 44px;
     border-radius: var(--radius-full);
-    background: var(--accent-gradient);
+    background: var(--primary);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-base);
+    transition: all 0.2s;
+    border: none;
 }
 
 .send-btn:hover:not(:disabled) {
     transform: scale(1.05);
+    background: var(--primary-hover);
 }
 
 .send-btn:disabled {

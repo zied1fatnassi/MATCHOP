@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Briefcase, MapPin, DollarSign, Clock, FileText, Plus, X, Send, Loader } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+import { FormLocationSelector } from '../../components/forms/FormComponents'
 import ApplicationToast from '../../components/ApplicationToast'
 import './PostOffer.css'
 
@@ -86,11 +87,11 @@ function PostOffer() {
                                 </h3>
 
                                 <div className="input-group">
-                                    <label className="input-label">Job Title *</label>
+                                    <label className="input-label">Titre du poste / Job Title *</label>
                                     <input
                                         type="text"
                                         className="input"
-                                        placeholder="e.g. Software Engineer Intern"
+                                        placeholder="Stage de fin d'études - Développeur Full Stack"
                                         value={offer.title}
                                         onChange={(e) => setOffer({ ...offer, title: e.target.value })}
                                         required
@@ -99,11 +100,11 @@ function PostOffer() {
 
                                 <div className="input-row">
                                     <div className="input-group">
-                                        <label className="input-label">Department</label>
+                                        <label className="input-label">Département / Department</label>
                                         <input
                                             type="text"
                                             className="input"
-                                            placeholder="e.g. Engineering"
+                                            placeholder="Technologies de l'Information, Marketing..."
                                             value={offer.department}
                                             onChange={(e) => setOffer({ ...offer, department: e.target.value })}
                                         />
@@ -127,11 +128,11 @@ function PostOffer() {
                                 <div className="input-group">
                                     <label className="input-label">
                                         <FileText size={16} />
-                                        Job Description *
+                                        Description du poste / Job Description *
                                     </label>
                                     <textarea
                                         className="input textarea"
-                                        placeholder="Describe the role, responsibilities, and what the candidate will learn..."
+                                        placeholder="Décrivez le rôle, les responsabilités et ce que le candidat apprendra..."
                                         value={offer.description}
                                         onChange={(e) => setOffer({ ...offer, description: e.target.value })}
                                         required
@@ -139,10 +140,10 @@ function PostOffer() {
                                 </div>
 
                                 <div className="input-group">
-                                    <label className="input-label">Requirements</label>
+                                    <label className="input-label">Prérequis / Requirements</label>
                                     <textarea
                                         className="input textarea"
-                                        placeholder="List the qualifications and experience needed..."
+                                        placeholder="Listez les qualifications et l'expérience requises..."
                                         value={offer.requirements}
                                         onChange={(e) => setOffer({ ...offer, requirements: e.target.value })}
                                     />
@@ -173,13 +174,13 @@ function PostOffer() {
 
                                 {offer.locationType !== 'remote' && (
                                     <div className="input-group">
-                                        <label className="input-label">Location *</label>
-                                        <input
-                                            type="text"
-                                            className="input"
-                                            placeholder="e.g. San Francisco, CA"
-                                            value={offer.location}
-                                            onChange={(e) => setOffer({ ...offer, location: e.target.value })}
+                                        <FormLocationSelector
+                                            label="Ville / Location"
+                                            governorateValue={offer.governorate}
+                                            cityValue={offer.location}
+                                            onGovernorateChange={(val) => setOffer(prev => ({ ...prev, governorate: val }))}
+                                            onCityChange={(val) => setOffer(prev => ({ ...prev, location: val }))}
+                                            required
                                         />
                                     </div>
                                 )}
@@ -188,12 +189,12 @@ function PostOffer() {
                                     <div className="input-group">
                                         <label className="input-label">
                                             <DollarSign size={16} />
-                                            Compensation
+                                            Salaire / Compensation
                                         </label>
                                         <input
                                             type="text"
                                             className="input"
-                                            placeholder="e.g. 1500"
+                                            placeholder="1500 TND / mois"
                                             value={offer.salary}
                                             onChange={(e) => setOffer({ ...offer, salary: e.target.value })}
                                         />
@@ -202,12 +203,12 @@ function PostOffer() {
                                     <div className="input-group">
                                         <label className="input-label">
                                             <Clock size={16} />
-                                            Duration
+                                            Durée / Duration
                                         </label>
                                         <input
                                             type="text"
                                             className="input"
-                                            placeholder="e.g. 3 months"
+                                            placeholder="3 mois, 6 mois, Indéterminé"
                                             value={offer.duration}
                                             onChange={(e) => setOffer({ ...offer, duration: e.target.value })}
                                         />

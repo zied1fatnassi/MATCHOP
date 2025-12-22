@@ -24,6 +24,7 @@ function Navbar() {
     const studentLinks = [
         { to: '/student/matches', icon: <Heart size={18} />, label: t('nav.matches') },
         { to: '/student/swipe', icon: <Home size={18} />, label: t('nav.discover') },
+        { to: '/student/global-jobs', icon: <Globe size={18} />, label: 'Global Jobs' },
         { to: '/student/profile', icon: <User size={18} />, label: t('nav.profile') },
     ]
 

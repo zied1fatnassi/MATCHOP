@@ -40,12 +40,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-spring);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 2px solid;
+    background: var(--glass-surface);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .action-btn:hover:not(:disabled) {
     transform: scale(1.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .action-btn:active:not(:disabled) {
@@ -53,76 +56,80 @@
 }
 
 .action-btn:disabled {
-    opacity: 0.3;
+    opacity: 0.5;
     cursor: not-allowed;
+    background: var(--bg-main);
+    box-shadow: none;
 }
 
 .action-btn.undo {
     width: 44px;
     height: 44px;
-    background: var(--glass-bg);
-    border-color: var(--gray-500);
-    color: rgba(255, 255, 255, 0.75);
+    border-color: var(--glass-border);
+    color: var(--text-secondary);
 }
 
 .action-btn.undo:hover:not(:disabled) {
-    color: white;
-    border-color: white;
+    color: var(--text-primary);
+    border-color: var(--text-primary);
 }
 
 .action-btn.pass {
     width: 64px;
     height: 64px;
-    background: var(--glass-bg);
     border-color: var(--accent-red);
     color: var(--accent-red);
 }
 
 .action-btn.pass:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(220, 38, 38, 0.1);
 }
 
 .action-btn.super-like {
-    background: var(--glass-bg);
-    border-color: #3b82f6;
-    color: #3b82f6;
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .action-btn.super-like:hover {
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .action-btn.like {
     width: 64px;
     height: 64px;
-    background: var(--glass-bg);
-    border-color: var(--accent-green);
-    color: var(--accent-green);
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
 }
 
 .action-btn.like:hover {
-    background: rgba(16, 185, 129, 0.2);
+    background: rgba(13, 148, 136, 0.1);
 }
 
 .no-more-offers {
     text-align: center;
     padding: var(--space-12);
     max-width: 400px;
+    background: var(--glass-surface);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--glass-border);
 }
 
 .empty-icon {
     font-size: 64px;
     margin-bottom: var(--space-4);
+    color: var(--text-muted);
 }
 
 .no-more-offers h2 {
-    font-size: var(--font-size-2xl);
+    font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: var(--space-2);
+    color: var(--text-primary);
 }
 
 .no-more-offers p {
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
     margin-bottom: var(--space-6);
 }
 

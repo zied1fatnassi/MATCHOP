@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, Building2, ArrowRight, CheckCircle, Globe, Loader2, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { validatePassword, validateEmail, validateName, getPasswordStrengthInfo, getAuthErrorMessage } from '../../lib/validation'
+import { validatePassword, validateEmail, validateName, getPasswordStrengthInfo, getAuthErrorMessage, validateURL } from '../../lib/validation'
 import '../student/StudentSignup.css'
 
 /**
@@ -214,7 +214,7 @@ function CompanySignup() {
                                             type="text"
                                             name="companyName"
                                             className="input"
-                                            placeholder="Acme Corporation"
+                                            placeholder="Sofrecom Tunisia, Vermeg"
                                             value={formData.companyName}
                                             onChange={handleChange}
                                             disabled={isLoading}
@@ -232,7 +232,7 @@ function CompanySignup() {
                                             type="email"
                                             name="email"
                                             className="input"
-                                            placeholder="you@company.com"
+                                            placeholder="hr@sofrecom.tn"
                                             value={formData.email}
                                             onChange={handleChange}
                                             disabled={isLoading}
@@ -294,7 +294,7 @@ function CompanySignup() {
                                             type="url"
                                             name="website"
                                             className="input"
-                                            placeholder="https://company.com"
+                                            placeholder="https://sofrecom.tn"
                                             value={formData.website}
                                             onChange={handleChange}
                                             disabled={isLoading}

@@ -39,12 +39,11 @@ export async function uploadCV(userId, file) {
 
     if (error) throw error
 
-    // Get signed URL (valid for 1 hour)
-    const { data: { signedUrl } } = await supabase.storage
+    const { data: { publicUrl } } = supabase.storage
         .from('cvs')
-        .createSignedUrl(fileName, 3600)
+        .getPublicUrl(fileName)
 
-    return signedUrl
+    return publicUrl
 }
 
 /**

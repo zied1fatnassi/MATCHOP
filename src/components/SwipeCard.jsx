@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useTransform } from 'framer-motion'
+import { motion, useMotionValue, useTransform, useSpring, useAnimation } from 'framer-motion'
 import { MapPin, Briefcase, DollarSign, Clock, Info } from 'lucide-react'
 import './SwipeCard.css'
 
@@ -8,24 +8,32 @@ import './SwipeCard.css'
  */
 function SwipeCard({ offer, onSwipe, isTop, onViewDetails }) {
     const x = useMotionValue(0)
-    const rotate = useTransform(x, [-200, 200], [-25, 25])
+    const rotate = useTransform(x, [-200, 200], [-25, 25]) // Slightly reduced rotation for stability
     const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0])
 
     // Like/Pass indicator opacity
     const likeOpacity = useTransform(x, [0, 100], [0, 1])
     const passOpacity = useTransform(x, [0, -100], [0, 1])
 
-    const handleDragEnd = (event, info) => {
-        const threshold = 150
+    // Spring physics for "satisfying" snap back
+    const rotateSpring = useSpring(rotate, { stiffness: 400, damping: 25 })
+    const xSpring = useSpring(x, { stiffness: 400, damping: 25 }) // Smoother follow
 
-        if (info.offset.x > threshold) {
-            // Swiped right - Like
-            x.set(500) // Animate off screen
-            setTimeout(() => onSwipe('right'), 200)
-        } else if (info.offset.x < -threshold) {
-            // Swiped left - Pass
-            x.set(-500) // Animate off screen
-            setTimeout(() => onSwipe('left'), 200)
+    const controls = useAnimation() // Initialize animation controls
+
+    const handleDragEnd = async (_, info) => {
+        const threshold = 100
+        const velocity = info.velocity.x
+
+        if (info.offset.x > threshold || velocity > 500) {
+            await controls.start({ x: 500, opacity: 0, transition: { duration: 0.4 } }) // Snappier exit
+            onSwipe('right')
+        } else if (info.offset.x < -threshold || velocity < -500) {
+            await controls.start({ x: -500, opacity: 0, transition: { duration: 0.4 } })
+            onSwipe('left')
+        } else {
+            // Satisfying snap back
+            controls.start({ x: 0, transition: { type: 'spring', stiffness: 500, damping: 30 } })
         }
     }
 

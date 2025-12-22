@@ -154,18 +154,19 @@ function StudentSwipe() {
                         </div>
                     </>
                 ) : (
-                    <div className="no-more-offers glass-card">
-                        <div className="empty-icon">🎯</div>
-                        <h2>You're all caught up!</h2>
-                        <p>You've seen all available opportunities. Check back later for new matches.</p>
+                    <div className="no-more-offers glass-card hover-lift" style={{ textAlign: 'center', padding: '3rem' }}>
+                        <div className="empty-icon text-6xl mb-4">🎯</div>
+                        <h2 className="text-2xl font-bold mb-2">You're all caught up!</h2>
+                        <p className="text-muted mb-6">You've seen all available opportunities. Check back later for new matches.</p>
                         <button
                             className="btn btn-primary"
                             onClick={() => {
                                 setCurrentIndex(0)
                                 setSwipeHistory([])
+                                refresh() // Explicitly call refresh
                             }}
                         >
-                            Start Over
+                            Refresh Jobs <RotateCcw size={18} className="ml-2" />
                         </button>
                     </div>
                 )}

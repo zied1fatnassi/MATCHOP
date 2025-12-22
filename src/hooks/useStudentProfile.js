@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { TUNISIAN_GOVERNORATES } from '../lib/validation'
 
 /**
  * Simplified Student Profile Hook
@@ -41,7 +42,7 @@ export function useStudentProfile() {
         if (!prof) return setCompletion(0)
 
         let filled = 0
-        const total = 10
+        const total = 11
 
         if (prof.avatar_url) filled++
         if (prof.display_name) filled++
@@ -53,6 +54,7 @@ export function useStudentProfile() {
         if (edu && edu.length > 0) filled++
         if (certs && certs.length > 0) filled++
         if (langs && langs.length > 0) filled++
+        if (prof.cv_url) filled++
 
         setCompletion(Math.round((filled / total) * 100))
     }
@@ -126,10 +128,29 @@ export function useStudentProfile() {
                 location: '',
                 skills: [],
                 avatar_url: '',
-                open_to_work: false
+                open_to_work: false,
+                cv_url: ''
             }
 
-            setProfile(finalProfile)
+            // Parse location to extract governorate if present
+            // Format: "Governorate, City" or just "City"
+            let governorate = ''
+            let city = finalProfile.location || ''
+
+            if (city && city.includes(',')) {
+                const parts = city.split(',')
+                const potentialGov = parts[0].trim()
+                if (TUNISIAN_GOVERNORATES.includes(potentialGov)) {
+                    governorate = potentialGov
+                    city = parts.slice(1).join(',').trim()
+                }
+            }
+
+            setProfile({
+                ...finalProfile,
+                governorate, // Add extracted governorate to state
+                location: city // Keep only city in location field for UI
+            })
             setExperiences(expData || [])
             setEducation(eduData || [])
             calculateCompletion(finalProfile, expData || [], eduData || [])
@@ -158,8 +179,25 @@ export function useStudentProfile() {
         if (!user?.id) return { error: 'Not authenticated' }
 
         try {
-            // Remove headline from updates (students table doesn't have this column)
-            const { headline, ...dbUpdates } = updates
+            // Remove fields that don't exist in DB
+            const { headline, governorate, location, ...otherUpdates } = updates
+
+            // Combine governorate and city for storage
+            let dbLocation = location
+            if (governorate) {
+                dbLocation = `${governorate}, ${location}`
+            }
+
+            // WHITELIST: Only send columns that exist in the DB
+            // We will add 'headline' and 'open_to_work' to this list AFTER migration succeeds
+            const validCols = ['display_name', 'bio', 'skills', 'avatar_url', 'headline', 'open_to_work', 'cv_url']
+            const dbUpdates = {
+                location: dbLocation
+            }
+
+            validCols.forEach(col => {
+                if (updates[col] !== undefined) dbUpdates[col] = updates[col]
+            })
 
             const { error: updateError } = await supabase
                 .from('students')

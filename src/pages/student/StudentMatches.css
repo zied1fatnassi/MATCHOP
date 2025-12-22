@@ -2,6 +2,7 @@
     min-height: 100vh;
     padding-top: 100px;
     padding-bottom: var(--space-10);
+    background: transparent;
 }
 
 .matches-header {
@@ -9,20 +10,21 @@
 }
 
 .matches-header h1 {
-    font-size: var(--font-size-3xl);
+    font-size: 2rem;
     font-weight: 700;
     margin-bottom: var(--space-2);
+    color: var(--text-primary);
 }
 
 .matches-header p {
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
 }
 
 .matches-list {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
-    max-width: 700px;
+    max-width: 800px;
 }
 
 .match-card {
@@ -30,17 +32,25 @@
     align-items: flex-start;
     gap: var(--space-4);
     padding: var(--space-5);
-    transition: all var(--transition-base);
+    background: var(--glass-surface);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--glass-shadow);
+    transition: all 0.2s;
     position: relative;
+    text-decoration: none;
+    color: inherit;
 }
 
 .match-card:hover {
     transform: translateX(4px);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--glass-surface-hover);
+    border-color: var(--primary);
 }
 
 .match-card.unread {
-    background: rgba(33, 150, 243, 0.1);
+    background: rgba(37, 99, 235, 0.05);
     border-color: var(--primary);
 }
 
@@ -48,14 +58,15 @@
     width: 60px;
     height: 60px;
     border-radius: var(--radius-lg);
-    background: var(--accent-gradient);
+    background: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-2xl);
+    font-size: 1.5rem;
     font-weight: 700;
     flex-shrink: 0;
     overflow: hidden;
+    color: white;
 }
 
 .match-avatar img {
@@ -78,19 +89,20 @@
 }
 
 .match-company {
-    font-size: var(--font-size-lg);
+    font-size: 1.1rem;
     font-weight: 600;
+    color: var(--text-primary);
 }
 
 .match-time {
-    font-size: var(--font-size-xs);
-    color: var(--gray-500);
+    font-size: 0.8rem;
+    color: var(--text-muted);
     white-space: nowrap;
 }
 
 .match-title {
-    color: var(--primary-light);
-    font-size: var(--font-size-sm);
+    color: var(--primary);
+    font-size: 0.9rem;
     font-weight: 500;
     margin-bottom: var(--space-1);
 }
@@ -99,14 +111,14 @@
     display: flex;
     align-items: center;
     gap: var(--space-1);
-    color: rgba(255, 255, 255, 0.75);
-    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
     margin-bottom: var(--space-2);
 }
 
 .match-message {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -116,8 +128,9 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    color: var(--primary-light);
+    color: var(--primary);
     font-style: italic;
+    opacity: 0.8;
 }
 
 .unread-badge {
@@ -126,30 +139,57 @@
     right: var(--space-4);
     width: 10px;
     height: 10px;
-    background: var(--accent-blue);
+    background: var(--accent-red);
     border-radius: var(--radius-full);
+    box-shadow: 0 0 0 2px var(--bg-main);
 }
 
 .no-matches {
     text-align: center;
     padding: var(--space-12);
     max-width: 400px;
+    margin: 0 auto;
+    background: var(--glass-surface);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--glass-border);
 }
 
 .empty-icon {
     font-size: 64px;
     margin-bottom: var(--space-4);
+    color: var(--text-muted);
 }
 
 .no-matches h2 {
-    font-size: var(--font-size-2xl);
+    font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: var(--space-2);
+    color: var(--text-primary);
 }
 
 .no-matches p {
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
     margin-bottom: var(--space-6);
+}
+
+.matches-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-12);
+    color: var(--text-muted);
+    gap: var(--space-4);
+}
+
+.matches-error {
+    text-align: center;
+    padding: var(--space-8);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-xl);
+    color: var(--accent-red);
 }
 
 @media (max-width: 640px) {
@@ -160,6 +200,6 @@
     .match-avatar {
         width: 50px;
         height: 50px;
-        font-size: var(--font-size-xl);
+        font-size: 1.25rem;
     }
 }

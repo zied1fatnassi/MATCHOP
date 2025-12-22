@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, User, ArrowRight, GraduationCap, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { validatePassword, validateEmail, validateName, getPasswordStrengthInfo, getAuthErrorMessage } from '../../lib/validation'
+import { validatePassword, validateEmail, validateName, getPasswordStrengthInfo, getAuthErrorMessage, TUNISIAN_UNIVERSITIES } from '../../lib/validation'
 import './StudentSignup.css'
 
 /**
@@ -12,7 +12,6 @@ import './StudentSignup.css'
 function StudentSignup() {
     const navigate = useNavigate()
     const { signUp } = useAuth()
-    const [step, setStep] = useState(1)
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -38,76 +37,66 @@ function StudentSignup() {
         }
     }
 
-    const validateStep1 = () => {
-        // Validate name
-        const nameValidation = validateName(formData.name)
-        if (!nameValidation.valid) {
-            setError(nameValidation.error)
-            return false
-        }
-
-        // Validate email
-        const emailValidation = validateEmail(formData.email)
-        if (!emailValidation.valid) {
-            setError(emailValidation.error)
-            return false
-        }
-
-        // Validate password strength
-        const passwordValidation = validatePassword(formData.password)
-        if (!passwordValidation.valid) {
-            setError(passwordValidation.errors[0])
-            return false
-        }
-
-        return true
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
 
-        if (step < 2) {
-            if (validateStep1()) {
-                setStep(step + 1)
-            }
-        } else {
-            // Final submission
-            if (!formData.university || !formData.major || !formData.graduationYear) {
-                setError('Please complete all fields')
+        // Validate Name
+        const nameValidation = validateName(formData.name)
+        if (!nameValidation.valid) {
+            setError(nameValidation.error)
+            return
+        }
+
+        // Validate Email
+        const emailValidation = validateEmail(formData.email)
+        if (!emailValidation.valid) {
+            setError(emailValidation.error)
+            return
+        }
+
+        // Validate Password
+        const passwordValidation = validatePassword(formData.password)
+        if (!passwordValidation.valid) {
+            setError(passwordValidation.errors[0])
+            return
+        }
+
+        // Validate Education Fields
+        if (!formData.university || !formData.major || !formData.graduationYear) {
+            setError('Please complete all fields (University, Major, Graduation Year)')
+            return
+        }
+
+        setIsLoading(true)
+
+        try {
+            const { data, error: signUpError, needsEmailVerification } = await signUp(
+                formData.email,
+                formData.password,
+                'student',
+                {
+                    name: formData.name,
+                    university: formData.university,
+                    major: formData.major,
+                    graduationYear: formData.graduationYear
+                }
+            )
+
+            if (signUpError) {
+                setError(getAuthErrorMessage(signUpError))
                 return
             }
 
-            setIsLoading(true)
-
-            try {
-                const { data, error: signUpError, needsEmailVerification } = await signUp(
-                    formData.email,
-                    formData.password,
-                    'student',
-                    {
-                        name: formData.name,
-                        university: formData.university,
-                        major: formData.major,
-                        graduationYear: formData.graduationYear
-                    }
-                )
-
-                if (signUpError) {
-                    setError(getAuthErrorMessage(signUpError))
-                    return
-                }
-
-                if (needsEmailVerification) {
-                    setShowEmailVerification(true)
-                } else if (data?.user) {
-                    navigate('/student/profile')
-                }
-            } catch (err) {
-                setError(getAuthErrorMessage(err))
-            } finally {
-                setIsLoading(false)
+            if (needsEmailVerification) {
+                setShowEmailVerification(true)
+            } else if (data?.user) {
+                navigate('/student/profile')
             }
+        } catch (err) {
+            setError(getAuthErrorMessage(err))
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -116,264 +105,270 @@ function StudentSignup() {
     // Email verification success screen
     if (showEmailVerification) {
         return (
-            <div className="auth-page">
-                <div className="auth-container">
-                    <div className="auth-visual">
-                        <div className="visual-content">
-                            <div className="visual-icon animate-float">
-                                <Mail size={64} />
-                            </div>
-                            <h2>Check Your Email</h2>
-                            <p>We've sent a verification link to your inbox</p>
-                        </div>
+            <div className="login-page">
+                <div className="login-container glass-card" style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem', margin: '0 auto', minHeight: 'auto' }}>
+                    <div className="animate-float" style={{ color: 'var(--primary)', marginBottom: '1.5rem' }}>
+                        <Mail size={64} />
                     </div>
-
-                    <div className="auth-form-container">
-                        <div className="email-verification-notice">
-                            <div className="verification-icon">
-                                <CheckCircle size={48} />
-                            </div>
-                            <h2>Verify Your Email</h2>
-                            <p>We've sent a verification email to:</p>
-                            <p className="verification-email">{formData.email}</p>
-                            <p className="verification-instructions">
-                                Click the link in the email to activate your account.
-                                If you don't see it, check your spam folder.
-                            </p>
-                            <Link to="/student/login" className="btn btn-primary">
-                                Go to Login
-                            </Link>
-                        </div>
-                    </div>
+                    <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Check Your Email</h2>
+                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '2rem' }}>
+                        We've sent a verification link to <strong>{formData.email}</strong>.<br />
+                        Click the link to activate your account.
+                    </p>
+                    <Link to="/student/login" className="btn btn-primary">
+                        Go to Login
+                    </Link>
                 </div>
+                <style>{`
+                    .login-page {
+                        min-height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 2rem;
+                    }
+                `}</style>
             </div>
         )
     }
 
     return (
-        <div className="auth-page">
-            <div className="auth-container">
-                <div className="auth-visual">
-                    <div className="visual-content">
-                        <div className="visual-icon animate-float">
-                            <GraduationCap size={64} />
-                        </div>
-                        <h2>Start Your Journey</h2>
-                        <p>Join thousands of students discovering their dream careers through MatchOp</p>
-
-                        <div className="visual-features">
-                            <div className="visual-feature">
-                                <CheckCircle size={20} />
-                                <span>Personalized job matches</span>
-                            </div>
-                            <div className="visual-feature">
-                                <CheckCircle size={20} />
-                                <span>Direct company connections</span>
-                            </div>
-                            <div className="visual-feature">
-                                <CheckCircle size={20} />
-                                <span>Interview scheduling</span>
-                            </div>
-                        </div>
+        <div className="login-page">
+            <div className="login-container glass-card hover-lift" style={{ maxWidth: '1000px' }}>
+                <div className="login-header">
+                    <div className="icon-wrapper">
+                        <GraduationCap size={40} className="text-white" />
                     </div>
+                    <h1>Join MatchOp</h1>
+                    <p>Start your career journey today</p>
                 </div>
 
-                <div className="auth-form-container">
-                    <div className="auth-header">
-                        <h1>Create Account</h1>
-                        <p>Already have an account? <Link to="/student/login">Sign in</Link></p>
-                    </div>
-
-                    {/* Progress Steps */}
-                    <div className="progress-steps">
-                        <div className={`progress-step ${step >= 1 ? 'active' : ''}`}>
-                            <div className="step-dot">1</div>
-                            <span>Account</span>
-                        </div>
-                        <div className="progress-line"></div>
-                        <div className={`progress-step ${step >= 2 ? 'active' : ''}`}>
-                            <div className="step-dot">2</div>
-                            <span>Education</span>
-                        </div>
-                    </div>
-
+                <div className="login-form-wrapper">
                     {error && (
-                        <div className="auth-error">
+                        <div className="auth-error mb-4">
                             <AlertCircle size={18} />
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        {step === 1 && (
-                            <div className="form-step animate-fade-in">
-                                <div className="input-group">
-                                    <label className="input-label">Full Name</label>
-                                    <div className="input-with-icon">
-                                        <User size={20} className="input-icon" />
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            className="input"
-                                            placeholder="John Doe"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            disabled={isLoading}
-                                            required
-                                            autoComplete="name"
+                    <form onSubmit={handleSubmit} className="login-form">
+                        <div className="form-group">
+                            <label>Full Name</label>
+                            <div className="input-wrapper">
+                                <User size={20} className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="name"
+                                    className="input"
+                                    placeholder="e.g. Ahmed Ben Ali"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                    required
+                                    autoComplete="name"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Email Address</label>
+                            <div className="input-wrapper">
+                                <Mail size={20} className="input-icon" />
+                                <input
+                                    type="email"
+                                    name="email"
+                                    className="input"
+                                    placeholder="student@university.tn"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                    required
+                                    autoComplete="email"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Password</label>
+                            <div className="input-wrapper">
+                                <Lock size={20} className="input-icon" />
+                                <input
+                                    type="password"
+                                    name="password"
+                                    className="input"
+                                    placeholder="Create a strong password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                    required
+                                    autoComplete="new-password"
+                                />
+                            </div>
+
+                            {/* Password strength indicator */}
+                            {formData.password && (
+                                <div className="password-strength" style={{ marginTop: '0.5rem' }}>
+                                    <div className="strength-bar" style={{ height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
+                                        <div
+                                            className="strength-fill"
+                                            style={{
+                                                width: `${passwordStrength.strength}%`,
+                                                backgroundColor: passwordStrength.strength < 40 ? '#ef4444' : passwordStrength.strength < 80 ? '#f59e0b' : '#10b981',
+                                                height: '100%',
+                                                transition: 'width 0.3s ease, background-color 0.3s ease'
+                                            }}
                                         />
                                     </div>
-                                </div>
-
-                                <div className="input-group">
-                                    <label className="input-label">Email Address</label>
-                                    <div className="input-with-icon">
-                                        <Mail size={20} className="input-icon" />
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            className="input"
-                                            placeholder="you@university.edu"
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            disabled={isLoading}
-                                            required
-                                            autoComplete="email"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="input-group">
-                                    <label className="input-label">Password</label>
-                                    <div className="input-with-icon">
-                                        <Lock size={20} className="input-icon" />
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            className="input"
-                                            placeholder="••••••••"
-                                            value={formData.password}
-                                            onChange={handleChange}
-                                            disabled={isLoading}
-                                            required
-                                            autoComplete="new-password"
-                                        />
-                                    </div>
-
-                                    {/* Password strength indicator */}
-                                    {formData.password && (
-                                        <div className="password-strength">
-                                            <div className="strength-bar">
-                                                <div
-                                                    className="strength-fill"
-                                                    style={{
-                                                        width: `${passwordStrength.strength}%`,
-                                                        backgroundColor: strengthInfo.color
-                                                    }}
-                                                />
-                                            </div>
-                                            <span className="strength-label" style={{ color: strengthInfo.color }}>
-                                                {strengthInfo.label}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <p className="password-hint">
-                                        Min. 8 characters with uppercase, lowercase, number, and special character
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                        {passwordStrength.errors[0] || 'Password strength'}
                                     </p>
                                 </div>
+                            )}
+                        </div>
+
+                        <div className="form-group">
+                            <label>University</label>
+                            <div className="input-wrapper">
+                                <GraduationCap size={20} className="input-icon" />
+                                <select
+                                    name="university"
+                                    className="input"
+                                    value={formData.university}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                    required
+                                >
+                                    <option value="">Select University</option>
+                                    {TUNISIAN_UNIVERSITIES.map((uni) => (
+                                        <option key={uni} value={uni}>{uni}</option>
+                                    ))}
+                                </select>
                             </div>
-                        )}
+                        </div>
 
-                        {step === 2 && (
-                            <div className="form-step animate-fade-in">
-                                <div className="input-group">
-                                    <label className="input-label">University</label>
-                                    <div className="input-with-icon">
-                                        <GraduationCap size={20} className="input-icon" />
-                                        <input
-                                            type="text"
-                                            name="university"
-                                            className="input"
-                                            placeholder="Stanford University"
-                                            value={formData.university}
-                                            onChange={handleChange}
-                                            disabled={isLoading}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="input-group">
-                                    <label className="input-label">Major</label>
+                        <div className="form-group">
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div>
+                                    <label>Major</label>
                                     <input
                                         type="text"
                                         name="major"
                                         className="input"
-                                        placeholder="Computer Science"
+                                        placeholder="e.g. CS"
                                         value={formData.major}
                                         onChange={handleChange}
-                                        disabled={isLoading}
                                         required
                                     />
                                 </div>
-
-                                <div className="input-group">
-                                    <label className="input-label">Expected Graduation</label>
-                                    <select
+                                <div>
+                                    <label>Graduation Year</label>
+                                    <input
+                                        type="number"
                                         name="graduationYear"
                                         className="input"
+                                        placeholder="2026"
                                         value={formData.graduationYear}
                                         onChange={handleChange}
-                                        disabled={isLoading}
                                         required
-                                    >
-                                        <option value="">Select year</option>
-                                        <option value="2024">2024</option>
-                                        <option value="2025">2025</option>
-                                        <option value="2026">2026</option>
-                                        <option value="2027">2027</option>
-                                        <option value="2028">2028</option>
-                                    </select>
+                                        min="2020"
+                                        max="2030"
+                                    />
                                 </div>
                             </div>
-                        )}
+                        </div>
 
                         <button
                             type="submit"
-                            className="btn btn-primary btn-lg w-full"
+                            className="btn btn-primary btn-block mt-4"
                             disabled={isLoading}
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 size={20} className="spinner" />
+                                    <Loader2 size={18} className="animate-spin mr-2" />
                                     Creating Account...
                                 </>
                             ) : (
                                 <>
-                                    {step < 2 ? 'Continue' : 'Create Account'}
+                                    Create Account
                                     <ArrowRight size={20} />
                                 </>
                             )}
                         </button>
 
-                        {step > 1 && (
-                            <button
-                                type="button"
-                                className="btn btn-secondary w-full"
-                                onClick={() => setStep(step - 1)}
-                                disabled={isLoading}
-                            >
-                                Back
-                            </button>
-                        )}
+                        <div className="form-footer">
+                            <p>Already have an account? <Link to="/student/login" className="text-primary font-bold">Sign in</Link></p>
+                            <p className="mt-2 text-sm text-muted">
+                                By signing up, you agree to our <Link to="/legal/terms" className="text-primary underline">Terms</Link> and <Link to="/legal/privacy" className="text-primary underline">Privacy Policy</Link>.
+                            </p>
+                        </div>
                     </form>
-
-                    <p className="auth-terms">
-                        By signing up, you agree to our <Link to="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</Link> and <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</Link>
-                    </p>
                 </div>
             </div>
+
+            {/* Reuse Login styles */}
+            <style>{`
+                .login-page {
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                }
+                .login-container {
+                    display: grid;
+                    grid-template-columns: 1fr 1.5fr;
+                    width: 100%;
+                    overflow: hidden;
+                    min-height: 600px;
+                }
+                .login-header {
+                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+                    padding: 3rem;
+                    color: white;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                }
+                .icon-wrapper {
+                    background: rgba(255,255,255,0.2);
+                    padding: 1.5rem;
+                    border-radius: 50%;
+                    margin-bottom: 1.5rem;
+                    backdrop-filter: blur(10px);
+                }
+                .login-header h1 { color: white; margin-bottom: 0.5rem; font-size: 2rem; }
+                .login-header p { color: rgba(255,255,255,0.8); }
+                
+                .login-form-wrapper { padding: 3rem; }
+                .form-group { margin-bottom: 1.25rem; }
+                .form-group label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-weight: 500;
+                    color: var(--text-primary);
+                }
+                .input-wrapper { position: relative; }
+                .input-icon {
+                    position: absolute;
+                    left: 1rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: var(--text-muted);
+                    pointer-events: none;
+                }
+                .input-wrapper input, .input-wrapper select { padding-left: 3rem; }
+                
+                .btn-block { width: 100%; justify-content: center; padding: 1rem; font-size: 1.1rem; }
+                .form-footer { margin-top: 2rem; text-align: center; color: var(--text-secondary); }
+
+                @media (max-width: 768px) {
+                    .login-container { grid-template-columns: 1fr; }
+                    .login-header { padding: 2rem; }
+                    .login-form-wrapper { padding: 2rem; }
+                }
+            `}</style>
         </div>
     )
 }

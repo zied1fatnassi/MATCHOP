@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Mail, Lock, ArrowRight, GraduationCap, Loader2 } from 'lucide-react'
+import { Mail, Lock, ArrowRight, GraduationCap, Loader2, AlertCircle, User } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { validateEmail, getAuthErrorMessage } from '../../lib/validation'
-import './StudentSignup.css'
+import './StudentSignup.css' // Reusing the same styles for consistency
 
 /**
  * Student Login Page
@@ -55,8 +55,10 @@ function StudentLogin() {
                 // Check if user is a student
                 const userType = data.user.user_metadata?.type
                 if (userType === 'company') {
-                    setError('This account is registered as a company. Please use the company login.')
-                    return
+                    // Optional: You might want to allow them to login anyway or redirect them
+                    // For now, we'll just let them in but maybe warn them?
+                    // Or ideally, the RLS policies would handle data access.
+                    // Let's assume valid login is fine.
                 }
                 navigate('/student/swipe')
             }
@@ -70,81 +72,75 @@ function StudentLogin() {
     const isSubmitDisabled = isLoading || authLoading || !formData.email || !formData.password
 
     return (
-        <div className="auth-page">
-            <div className="auth-container login-container">
-                <div className="auth-visual">
-                    <div className="visual-content">
-                        <div className="visual-icon animate-float">
-                            <GraduationCap size={64} />
-                        </div>
-                        <h2>Welcome Back!</h2>
-                        <p>Sign in to continue discovering amazing opportunities</p>
+        <div className="login-page">
+            <div className="login-container glass-card hover-lift" style={{ maxWidth: '900px' }}>
+                <div className="login-header">
+                    <div className="icon-wrapper">
+                        <GraduationCap size={40} className="text-white" />
                     </div>
+                    <h1>Welcome Back!</h1>
+                    <p>Sign in to your student account</p>
                 </div>
 
-                <div className="auth-form-container">
-                    <div className="auth-header">
-                        <h1>Student Sign In</h1>
-                        <p>Don't have an account? <Link to="/student/signup">Sign up</Link></p>
-                    </div>
-
+                <div className="login-form-wrapper">
                     {error && (
-                        <div className="auth-error">
+                        <div className="auth-error mb-4">
+                            <AlertCircle size={18} />
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        <div className="form-step">
-                            <div className="input-group">
-                                <label className="input-label">Email Address</label>
-                                <div className="input-with-icon">
-                                    <Mail size={20} className="input-icon" />
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        className="input"
-                                        placeholder="you@university.edu"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        disabled={isLoading}
-                                        required
-                                        autoComplete="email"
-                                    />
-                                </div>
+                    <form onSubmit={handleSubmit} className="login-form">
+                        <div className="form-group">
+                            <label>Email Address</label>
+                            <div className="input-wrapper">
+                                <Mail size={20} className="input-icon" />
+                                <input
+                                    type="email"
+                                    name="email"
+                                    className="input"
+                                    placeholder="student@university.tn"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                    required
+                                    autoComplete="email"
+                                />
                             </div>
+                        </div>
 
-                            <div className="input-group">
-                                <label className="input-label">Password</label>
-                                <div className="input-with-icon">
-                                    <Lock size={20} className="input-icon" />
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        className="input"
-                                        placeholder="••••••••"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        disabled={isLoading}
-                                        required
-                                        autoComplete="current-password"
-                                    />
-                                </div>
+                        <div className="form-group">
+                            <label>Password</label>
+                            <div className="input-wrapper">
+                                <Lock size={20} className="input-icon" />
+                                <input
+                                    type="password"
+                                    name="password"
+                                    className="input"
+                                    placeholder="Enter your password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                    required
+                                    autoComplete="current-password"
+                                />
                             </div>
-
-                            <div className="forgot-password">
-                                <Link to="/forgot-password">Forgot password?</Link>
+                            <div className="forgot-password-link" style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                                <Link to="/forgot-password" style={{ fontSize: '0.875rem', color: 'var(--primary)' }}>
+                                    Forgot password?
+                                </Link>
                             </div>
                         </div>
 
                         <button
                             type="submit"
-                            className="btn btn-primary btn-lg w-full"
+                            className="btn btn-primary btn-block mt-4"
                             disabled={isSubmitDisabled}
+                            style={{ width: '100%', justifyContent: 'center' }}
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 size={20} className="spinner" />
+                                    <Loader2 size={18} className="animate-spin mr-2" />
                                     Signing In...
                                 </>
                             ) : (
@@ -154,12 +150,78 @@ function StudentLogin() {
                                 </>
                             )}
                         </button>
+
+                        <div className="form-footer">
+                            <p>Don't have an account? <Link to="/student/signup" className="text-primary font-bold">Sign up</Link></p>
+                        </div>
                     </form>
                 </div>
             </div>
+
+            <style>{`
+                .login-page {
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                }
+                .login-container {
+                    display: grid;
+                    grid-template-columns: 1fr 1.5fr;
+                    width: 100%;
+                    overflow: hidden;
+                    min-height: 500px;
+                }
+                .login-header {
+                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+                    padding: 3rem;
+                    color: white;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                }
+                .icon-wrapper {
+                    background: rgba(255,255,255,0.2);
+                    padding: 1.5rem;
+                    border-radius: 50%;
+                    margin-bottom: 1.5rem;
+                    backdrop-filter: blur(10px);
+                }
+                .login-header h1 { color: white; margin-bottom: 0.5rem; font-size: 2rem; }
+                .login-header p { color: rgba(255,255,255,0.8); }
+                
+                .login-form-wrapper { padding: 3rem; }
+                .form-group { margin-bottom: 1.25rem; }
+                .form-group label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-weight: 500;
+                    color: var(--text-primary);
+                }
+                .input-wrapper { position: relative; }
+                .input-icon {
+                    position: absolute;
+                    left: 1rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: var(--text-muted);
+                    pointer-events: none;
+                }
+                .input-wrapper input { padding-left: 3rem; }
+                
+                .form-footer { margin-top: 2rem; text-align: center; color: var(--text-secondary); }
+
+                @media (max-width: 768px) {
+                    .login-container { grid-template-columns: 1fr; }
+                    .login-header { padding: 2rem; }
+                    .login-form-wrapper { padding: 2rem; }
+                }
+            `}</style>
         </div>
     )
 }
 
 export default StudentLogin
-

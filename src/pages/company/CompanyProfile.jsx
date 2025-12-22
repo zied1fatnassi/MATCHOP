@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, Plus, Save, MapPin, Users, Globe, Link as LinkIcon } from 'lucide-react'
+import { FormLocationSelector } from '../../components/forms/FormComponents'
 import '../student/StudentProfile.css'
 
 function CompanyProfile() {
@@ -75,28 +76,24 @@ function CompanyProfile() {
 
                         <div className="input-row">
                             <div className="input-group">
-                                <label className="input-label">
-                                    <MapPin size={16} />
-                                    Headquarters
-                                </label>
-                                <input
-                                    type="text"
-                                    className="input"
-                                    placeholder="San Francisco, CA"
-                                    value={profile.location}
-                                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                                <FormLocationSelector
+                                    label="Siège social / Headquarters"
+                                    governorateValue={profile.governorate}
+                                    cityValue={profile.location}
+                                    onGovernorateChange={(val) => setProfile(prev => ({ ...prev, governorate: val }))}
+                                    onCityChange={(val) => setProfile(prev => ({ ...prev, location: val }))}
                                 />
                             </div>
 
                             <div className="input-group">
                                 <label className="input-label">
                                     <Globe size={16} />
-                                    Website
+                                    Site web / Website
                                 </label>
                                 <input
                                     type="url"
                                     className="input"
-                                    placeholder="https://company.com"
+                                    placeholder="https://sofrecom.tn"
                                     value={profile.website}
                                     onChange={(e) => setProfile({ ...profile, website: e.target.value })}
                                 />
@@ -149,12 +146,12 @@ function CompanyProfile() {
                         <div className="input-group">
                             <label className="input-label">
                                 <LinkIcon size={16} />
-                                LinkedIn Company Page
+                                LinkedIn
                             </label>
                             <input
                                 type="url"
                                 className="input"
-                                placeholder="linkedin.com/company/yourcompany"
+                                placeholder="https://linkedin.com/company/sofrecom"
                                 value={profile.linkedin}
                                 onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
                             />

@@ -9,6 +9,14 @@ import { useAuth } from './context/AuthContext'
 import DiagnosticHelper from './components/DiagnosticHelper'
 
 // Lazy load all page components for code splitting
+import Terms from './pages/legal/Terms'
+import Privacy from './pages/legal/Privacy'
+import Cookies from './pages/legal/Cookies'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Blog from './pages/Blog'
+import Footer from './components/Footer'
+
 const Landing = lazy(() => import('./pages/Landing'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
@@ -24,6 +32,7 @@ const StudentProfile = lazy(() => import('./pages/student/StudentProfile'))
 const StudentSwipe = lazy(() => import('./pages/student/StudentSwipe'))
 const StudentMatches = lazy(() => import('./pages/student/StudentMatches'))
 const StudentChat = lazy(() => import('./pages/student/StudentChat'))
+const StudentGlobalJobs = lazy(() => import('./pages/student/GlobalJobs'))
 
 // Company pages
 const CompanySignup = lazy(() => import('./pages/company/CompanySignup'))
@@ -156,6 +165,8 @@ function App() {
     setToast(null)
   }
 
+  const isLanding = location.pathname === '/'
+
   return (
     <>
       {isLoading && (
@@ -165,7 +176,6 @@ function App() {
         />
       )}
 
-      {/* Auth Toast Notification */}
       {toast && (
         <AuthToast
           type={toast.type}
@@ -175,96 +185,74 @@ function App() {
         />
       )}
 
-      <Navbar />
-      <SpeedInsights />
-      <DiagnosticHelper />
-      <Suspense fallback={<RouteLoadingFallback />}>
-        <Routes>
-          {/* Landing - redirects if logged in */}
-          <Route path="/" element={<SmartLanding />} />
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Navbar />
+        <SpeedInsights />
+        <DiagnosticHelper />
 
-          {/* Public Auth Routes - redirect if already logged in */}
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+        <main style={{
+          flex: 1,
+          paddingTop: isLanding ? '0' : '90px', /* Fix overlap */
+          width: '100%'
+        }}>
+          <Suspense fallback={<RouteLoadingFallback />}>
+            <Routes>
+              {/* Landing */}
+              <Route path="/" element={<SmartLanding />} />
 
-          {/* Legal Pages - always accessible */}
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              {/* Public Auth */}
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/login" element={<StudentLogin />} /> {/* Default login */}
+              <Route path="/signup" element={<StudentSignup />} /> {/* Default signup */}
 
-          {/* Student Public Routes - redirect if already logged in */}
-          <Route path="/student/signup" element={
-            <PublicRoute>
-              <StudentSignup />
-            </PublicRoute>
-          } />
-          <Route path="/student/login" element={
-            <PublicRoute>
-              <StudentLogin />
-            </PublicRoute>
-          } />
+              {/* Legal */}
+              <Route path="/legal/terms" element={<TermsOfService />} />
+              <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+              {/* Note: Cookies and Terms files were created as .jsx in pages/legal/ but mapped imports might differ. 
+                  Using the dynamic imports defined at top of file for consistency if available, 
+                  or the direct Components created in previous steps.
+                  Let's use the lazy loaded ones if they exist, or direct imports if I created them.
+                  Wait, I created Terms.jsx, Privacy.jsx, Cookies.jsx in src/pages/legal/
+                  But the lazy imports in this file usually point to TermsOfService etc.
+                  I should stick to the structure I just created.
+              */}
 
-          {/* Student Protected Routes - require authentication */}
-          <Route path="/student/profile" element={
-            <ProtectedRoute requiredType="student">
-              <StudentProfile />
-            </ProtectedRoute>
-          } />
-          <Route path="/student/swipe" element={
-            <ProtectedRoute requiredType="student">
-              <StudentSwipe />
-            </ProtectedRoute>
-          } />
-          <Route path="/student/matches" element={
-            <ProtectedRoute requiredType="student">
-              <StudentMatches />
-            </ProtectedRoute>
-          } />
-          <Route path="/student/chat/:matchId" element={
-            <ProtectedRoute requiredType="student">
-              <StudentChat />
-            </ProtectedRoute>
-          } />
+              {/* Re-wiring to use the new          {/* Legal Routes */}
+              <Route path="/legal/terms" element={<Terms />} />
+              <Route path="/legal/privacy" element={<Privacy />} />
+              <Route path="/legal/cookies" element={<Cookies />} />
 
-          {/* Company Public Routes - redirect if already logged in */}
-          <Route path="/company/signup" element={
-            <PublicRoute>
-              <CompanySignup />
-            </PublicRoute>
-          } />
-          <Route path="/company/login" element={
-            <PublicRoute>
-              <CompanyLogin />
-            </PublicRoute>
-          } />
+              {/* Public Info Routes */}
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/blog" element={<Blog />} />
 
-          {/* Company Protected Routes - require authentication */}
-          <Route path="/company/profile" element={
-            <ProtectedRoute requiredType="company">
-              <CompanyProfile />
-            </ProtectedRoute>
-          } />
-          <Route path="/company/post-offer" element={
-            <ProtectedRoute requiredType="company">
-              <PostOffer />
-            </ProtectedRoute>
-          } />
-          <Route path="/company/candidates" element={
-            <ProtectedRoute requiredType="company">
-              <ViewCandidates />
-            </ProtectedRoute>
-          } />
-          <Route path="/company/matches" element={
-            <ProtectedRoute requiredType="company">
-              <CompanyMatches />
-            </ProtectedRoute>
-          } />
-          <Route path="/company/chat/:matchId" element={
-            <ProtectedRoute requiredType="company">
-              <CompanyChat />
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </Suspense>
+              {/* Student Routes */}
+              <Route path="/student/signup" element={<PublicRoute><StudentSignup /></PublicRoute>} />
+              <Route path="/student/login" element={<PublicRoute><StudentLogin /></PublicRoute>} />
+
+              <Route path="/student/profile" element={<ProtectedRoute requiredType="student"><StudentProfile /></ProtectedRoute>} />
+              <Route path="/student/swipe" element={<ProtectedRoute requiredType="student"><StudentSwipe /></ProtectedRoute>} />
+              <Route path="/student/matches" element={<ProtectedRoute requiredType="student"><StudentMatches /></ProtectedRoute>} />
+              <Route path="/student/chat/:matchId" element={<ProtectedRoute requiredType="student"><StudentChat /></ProtectedRoute>} />
+              <Route path="/student/global-jobs" element={<ProtectedRoute requiredType="student"><StudentGlobalJobs /></ProtectedRoute>} />
+
+              {/* Company */}
+              <Route path="/company/signup" element={<PublicRoute><CompanySignup /></PublicRoute>} />
+              <Route path="/company/login" element={<PublicRoute><CompanyLogin /></PublicRoute>} />
+
+              <Route path="/company/profile" element={<ProtectedRoute requiredType="company"><CompanyProfile /></ProtectedRoute>} />
+              <Route path="/company/post-offer" element={<ProtectedRoute requiredType="company"><PostOffer /></ProtectedRoute>} />
+              <Route path="/company/candidates" element={<ProtectedRoute requiredType="company"><ViewCandidates /></ProtectedRoute>} />
+              <Route path="/company/matches" element={<ProtectedRoute requiredType="company"><CompanyMatches /></ProtectedRoute>} />
+              <Route path="/company/chat/:matchId" element={<ProtectedRoute requiredType="company"><CompanyChat /></ProtectedRoute>} />
+            </Routes>
+          </Suspense>
+        </main>
+
+        {!isLanding && <Footer />}
+      </div>
     </>
   )
 }
