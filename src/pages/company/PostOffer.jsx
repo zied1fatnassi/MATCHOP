@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, MapPin, DollarSign, Clock, FileText, Plus, X, Send, Loader } from 'lucide-react'
+import { Briefcase, MapPin, DollarSign, Clock, FileText, Plus, X, Send, Loader, Sparkles } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { FormLocationSelector } from '../../components/forms/FormComponents'
@@ -12,6 +12,43 @@ function PostOffer() {
     const { user } = useAuth()
     const [loading, setLoading] = useState(false)
     const [showSuccess, setShowSuccess] = useState(false)
+    const [aiLoading, setAiLoading] = useState(false)
+    const [aiError, setAiError] = useState(null)
+
+    // Generate job description using AI
+    const generateDescription = async () => {
+        if (!offer.title.trim()) {
+            setAiError('Please enter a job title first')
+            return
+        }
+
+        setAiLoading(true)
+        setAiError(null)
+
+        try {
+            const { data, error } = await supabase.functions.invoke('ai-job-description', {
+                body: {
+                    jobTitle: offer.title,
+                    department: offer.department,
+                    jobType: offer.type,
+                    tone: 'professional'
+                }
+            })
+
+            if (error) throw error
+
+            if (data?.success && data?.description) {
+                setOffer(prev => ({ ...prev, description: data.description }))
+            } else {
+                throw new Error(data?.error || 'Failed to generate description')
+            }
+        } catch (error) {
+            console.error('AI generation error:', error)
+            setAiError(error.message || 'Failed to generate description. Please try again.')
+        } finally {
+            setAiLoading(false)
+        }
+    }
 
     const [offer, setOffer] = useState({
         title: '',
@@ -44,17 +81,30 @@ function PostOffer() {
 
         setLoading(true)
         try {
-            const { error } = await supabase.from('offers').insert({
+            const { data, error } = await supabase.from('offers').insert({
                 company_id: user.id,
                 title: offer.title,
                 description: offer.description,
-                req_skills: offer.skills, // V2.1 uses req_skills
+                req_skills: offer.skills,
                 location: offer.location || 'Remote',
                 salary_range: offer.salary || 'Competitive',
                 status: 'active'
-            })
+            }).select('id').single()
 
             if (error) throw error
+
+            // Generate embedding for semantic matching
+            if (data?.id) {
+                const textForEmbedding = [
+                    offer.title,
+                    offer.description,
+                    (offer.skills || []).join(', ')
+                ].filter(Boolean).join('. ')
+
+                supabase.functions.invoke('generate-embedding', {
+                    body: { text: textForEmbedding, type: 'job', id: data.id }
+                }).catch(err => console.warn('[Embedding] Failed:', err))
+            }
 
             setShowSuccess(true)
             setTimeout(() => {
@@ -126,13 +176,37 @@ function PostOffer() {
                                 </div>
 
                                 <div className="input-group">
-                                    <label className="input-label">
-                                        <FileText size={16} />
-                                        Description du poste / Job Description *
-                                    </label>
+                                    <div className="label-row">
+                                        <label className="input-label">
+                                            <FileText size={16} />
+                                            Description du poste / Job Description *
+                                        </label>
+                                        <button
+                                            type="button"
+                                            className="magic-rewrite-btn"
+                                            onClick={generateDescription}
+                                            disabled={aiLoading || !offer.title.trim()}
+                                            title="Generate AI description based on job title"
+                                        >
+                                            {aiLoading ? (
+                                                <>
+                                                    <Loader className="animate-spin" size={16} />
+                                                    Generating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles size={16} />
+                                                    ✨ Magic Rewrite
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                    {aiError && (
+                                        <div className="ai-error-message">{aiError}</div>
+                                    )}
                                     <textarea
                                         className="input textarea"
-                                        placeholder="Décrivez le rôle, les responsabilités et ce que le candidat apprendra..."
+                                        placeholder="Décrivez le rôle, les responsabilités et ce que le candidat apprendra... Or click 'Magic Rewrite' to generate with AI!"
                                         value={offer.description}
                                         onChange={(e) => setOffer({ ...offer, description: e.target.value })}
                                         required
