@@ -358,3 +358,94 @@ textarea:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--neutral-400);
 }
+
+/* ===================================
+   MOBILE STABILIZATION OVERRIDES
+   ================================ */
+
+@media (max-width: 768px) {
+
+  /* Freeze Glass for Performance */
+  :root {
+    --glass-blur: 12px;
+    /* Reduce heavy blur on mobile */
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* Lighter shadows */
+    --shadow-xl: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Kill All Layout-Affecting Animations */
+  * {
+    animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
+  }
+
+  /* Disable Hover Effects (Stick on Mobile) */
+  .glass-card:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover {
+    transform: none;
+  }
+
+  /* Increase Container Breathing Room */
+  .container {
+    padding: 0 var(--space-6);
+    /* 1.5rem = 24px */
+  }
+
+  /* Typography: Prevent Massive Text */
+  h1 {
+    font-size: clamp(2.5rem, 8vw, 3.5rem);
+  }
+
+  h2 {
+    font-size: clamp(1.75rem, 6vw, 2.5rem);
+  }
+
+  h3 {
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+  }
+
+  /* Touch Targets: Minimum 44px */
+  .btn {
+    min-height: 44px;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .btn-sm {
+    min-height: 44px;
+    /* Override the "small" size */
+    padding: 0.75rem 1.25rem;
+  }
+
+  /* No Translatey on Hover (Prevents Stuck State) */
+  .hover-lift:hover {
+    transform: none;
+  }
+
+  /* Inputs: Larger for Thumb-Friendly */
+  .input,
+  select,
+  textarea {
+    min-height: 48px;
+    font-size: 16px;
+    /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Ultra-Small Devices (< 400px) */
+@media (max-width: 400px) {
+  :root {
+    --space-4: 0.75rem;
+    /* Reduce base spacing */
+    --space-6: 1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+}

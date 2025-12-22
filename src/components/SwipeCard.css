@@ -186,3 +186,45 @@
     border: 1px solid var(--neutral-300);
     color: var(--text-tertiary);
 }
+
+/* ===================================
+   MOBILE STABILIZATION: SWIPE CARD
+   ================================ */
+
+@media (max-width: 768px) {
+
+    /* Freeze Glass Transparency (performance) */
+    .swipe-card {
+        background: rgba(255, 255, 255, 0.9);
+        /* Slightly more opaque on mobile */
+        backdrop-filter: blur(12px);
+        /* Reduced blur */
+    }
+
+    /* NO hover effects on mobile (prevents stuck state) */
+    .swipe-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-xl);
+    }
+
+    /* Ensure tap targets are large enough */
+    .detail-item {
+        min-height: 24px;
+        font-size: 0.85rem;
+    }
+
+    /* Simplify shadows for performance */
+    .match-score-badge {
+        box-shadow: none;
+        border: 1px solid rgba(20, 184, 166, 0.3);
+    }
+
+    .company-logo {
+        width: 56px;
+        height: 56px;
+    }
+
+    .job-title {
+        font-size: 1.5rem;
+    }
+}

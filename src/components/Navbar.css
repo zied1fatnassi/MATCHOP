@@ -24,9 +24,6 @@
     transition: all var(--duration-normal) var(--ease-spring);
 }
 
-/* Scrolled state (optional optimization) 
-   could be added via JS class .navbar.scrolled */
-
 .navbar-container {
     display: flex;
     align-items: center;
@@ -100,8 +97,8 @@
 .theme-toggle-btn,
 .lang-btn,
 .navbar-toggle {
-    width: 36px;
-    height: 36px;
+    min-width: 44px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -115,7 +112,7 @@
 
 .lang-btn {
     width: auto;
-    padding: 0 0.5rem;
+    padding: 0 0.75rem;
     border-radius: var(--radius-lg);
     gap: 4px;
     font-size: 0.85rem;
@@ -152,6 +149,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    z-index: 10;
 }
 
 .lang-option {
@@ -165,6 +163,7 @@
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--duration-fast);
+    min-height: 44px;
 }
 
 .lang-option:hover {
@@ -182,39 +181,49 @@
         display: flex;
     }
 
-    /* Links hidden by default on mobile */
+    /* MOBILE STABILIZATION: Full-Screen Overlay */
     .navbar-links {
+        /* Lock to viewport, no floating */
         position: fixed;
-        top: 70px;
-        /* Below the pill */
-        left: 50%;
-        transform: translateX(-50%) scale(0.95);
-        width: calc(100% - var(--space-8));
-        max-width: 400px;
+        inset: 0;
 
+        /* Remove transform scaling (causes jitter) */
+        transform: none;
+
+        /* Vertical stack, full-bleed */
         flex-direction: column;
         align-items: stretch;
+        justify-content: flex-start;
+        padding: 80px var(--space-6) var(--space-6);
+
+        /* Solid background for stability */
         background: var(--glass-base);
         backdrop-filter: blur(var(--glass-blur));
-        border: 1px solid var(--glass-border);
-        box-shadow: var(--shadow-xl);
-        border-radius: var(--radius-2xl);
-        padding: var(--space-2);
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
 
+        /* Hidden by default */
         opacity: 0;
         visibility: hidden;
-        transition: all var(--duration-normal) var(--ease-spring);
-        transform-origin: top center;
+        pointer-events: none;
+
+        /* Simple fade, no layout shift */
+        transition: opacity 0.2s ease, visibility 0.2s;
     }
 
     .navbar-links.active {
         opacity: 1;
         visibility: visible;
-        transform: translateX(-50%) scale(1);
+        pointer-events: auto;
     }
 
     .navbar-link {
         justify-content: flex-start;
-        padding: 0.75rem 1rem;
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+        min-height: 56px;
+        /* Larger tap target */
+        border-radius: var(--radius-xl);
     }
 }
