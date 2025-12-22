@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useBlocking } from './useBlocking'
 
 // Simple in-memory cache for job offers
 const offersCache = {
@@ -21,6 +22,7 @@ export function useJobOffers() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const { user, isStudent } = useAuth()
+    const { blockedUsers } = useBlocking()  // Get blocked users list
     const isMounted = useRef(true)
 
     useEffect(() => {
@@ -72,85 +74,92 @@ export function useJobOffers() {
         }, 30000)
 
         try {
-            // STEP 1: Get swipes for this student
-            let swipedOfferIds = []
-            console.log('[useJobOffers] Querying student_swipes for student_id:', user.id)
+            // STEP 1: Try smart matching via Edge Function
+            console.log('[useJobOffers] Trying get-matched-jobs Edge Function...')
 
+            const { data: matchedData, error: matchError } = await supabase.functions.invoke('get-matched-jobs')
+
+            if (!matchError && matchedData?.success && matchedData?.offers?.length > 0) {
+                console.log('[useJobOffers] Got matched jobs:', matchedData.offers.length, 'method:', matchedData.method)
+
+                // Filter out already swiped
+                const swipeResult = await supabase
+                    .from('student_swipes')
+                    .select('offer_id')
+                    .eq('student_id', user.id)
+
+                const swipedIds = new Set(swipeResult.data?.map(s => s.offer_id) || [])
+                offersCache.swipedIds = swipedIds
+
+                const filteredOffers = matchedData.offers.filter(o => !swipedIds.has(o.id))
+
+                offersCache.data = filteredOffers
+                offersCache.timestamp = now
+
+                clearTimeout(timeoutId)
+                if (isMounted.current) {
+                    setOffers(filteredOffers)
+                    setError(null)
+                    setLoading(false)
+                }
+                return
+            }
+
+            // STEP 2: Fallback to direct query
+            console.log('[useJobOffers] Fallback to direct query...')
+
+            let swipedOfferIds = []
             const swipeResult = await supabase
                 .from('student_swipes')
                 .select('offer_id')
                 .eq('student_id', user.id)
 
-            console.log('[useJobOffers] Swipes query result:', {
-                data: swipeResult.data,
-                error: swipeResult.error,
-                count: swipeResult.data?.length
-            })
-
-            if (swipeResult.error) {
-                console.error('[useJobOffers] Swipes query ERROR:', swipeResult.error.code, swipeResult.error.message)
-                // Continue - swipes table might not exist or RLS blocking
-            } else {
+            if (!swipeResult.error) {
                 swipedOfferIds = swipeResult.data?.map(s => s.offer_id) || []
                 offersCache.swipedIds = new Set(swipedOfferIds)
             }
 
-            // STEP 2: Get active offers with company data
-            console.log('[useJobOffers] Querying offers with companies...')
-
             const offersResult = await supabase
                 .from('offers')
-                .select('*, companies!company_id(id, company_name, logo_url, industry)')
+                .select('*, companies!company_id(id, company_name, logo_url, industry, verified, verification_method)')
                 .eq('status', 'active')
 
-            console.log('[useJobOffers] Job offers query result:', {
-                data: offersResult.data,
-                error: offersResult.error,
-                count: offersResult.data?.length
-            })
-
             if (offersResult.error) {
-                console.error('[useJobOffers] Job offers query ERROR:', offersResult.error.code, offersResult.error.message)
-                clearTimeout(timeoutId) // Clear timeout on error
+                clearTimeout(timeoutId)
                 if (isMounted.current) {
-                    setError(`Failed to load jobs: ${offersResult.error.message} (code: ${offersResult.error.code})`)
+                    setError(`Failed to load jobs: ${offersResult.error.message}`)
                     setOffers([])
                     setLoading(false)
                 }
                 return
             }
 
-            // Transform offers (now joining companies)
-            const transformedOffers = (offersResult.data || []).map(offer => ({
-                ...offer,
-                company: offer.companies?.company_name || 'Unknown Company',
-                companyLogo: offer.companies?.logo_url,
-                industry: offer.companies?.industry,
-                salary: offer.salary_range || 'Competitive',
-                skills: offer.req_skills || []
-            }))
+            const transformedOffers = (offersResult.data || [])
+                .filter(o => !swipedOfferIds.includes(o.id))
+                .map(offer => ({
+                    ...offer,
+                    company: offer.companies?.company_name || 'Unknown Company',
+                    companyLogo: offer.companies?.logo_url,
+                    companyVerified: offer.companies?.verified || false,
+                    companyVerificationMethod: offer.companies?.verification_method || null,
+                    industry: offer.companies?.industry,
+                    salary: offer.salary_range || 'Competitive',
+                    skills: offer.req_skills || [],
+                    matchScore: null
+                }))
 
-            // Update cache
             offersCache.data = transformedOffers
             offersCache.timestamp = now
 
-            // Filter out swiped offers
-            const filteredOffers = transformedOffers.filter(
-                offer => !swipedOfferIds.includes(offer.id)
-            )
-
-            console.log('[useJobOffers] Final result:', filteredOffers.length, 'offers to show, setting loading=false')
-
-            clearTimeout(timeoutId) // Clear timeout on success
-
+            clearTimeout(timeoutId)
             if (isMounted.current) {
-                setOffers(filteredOffers)
+                setOffers(transformedOffers)
                 setError(null)
                 setLoading(false)
             }
         } catch (err) {
             console.error('[useJobOffers] Unexpected exception:', err)
-            clearTimeout(timeoutId) // Clear timeout on error
+            clearTimeout(timeoutId)
             if (isMounted.current) {
                 setError(err.message || 'Failed to load job offers')
                 setOffers([])
