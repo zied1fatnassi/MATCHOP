@@ -14,18 +14,24 @@ export function DiagnosticHelper() {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
         const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-        console.log('[Diagnostic] Environment Variables:', {
-            hasSupabaseUrl: !!supabaseUrl,
-            hasSupabaseKey: !!supabaseKey,
-            supabaseUrlPreview: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'MISSING',
-            nodeEnv: import.meta.env.MODE
-        })
+        console.log('[Diagnostic] Environment Variables:')
+        console.log('  - VITE_SUPABASE_URL:', supabaseUrl ? '✅ SET' : '❌ MISSING')
+        console.log('  - VITE_SUPABASE_ANON_KEY:', supabaseKey ? '✅ SET' : '❌ MISSING')
+        if (supabaseUrl) {
+            console.log('  - URL Preview:', supabaseUrl.substring(0, 40) + '...')
+        }
+        console.log('  - Mode:', import.meta.env.MODE)
 
         if (!supabaseUrl || !supabaseKey) {
-            console.error('[Diagnostic] ❌ CRITICAL: Missing environment variables!')
-            console.error('[Diagnostic] Create a .env file with:')
-            console.error('VITE_SUPABASE_URL=your-url-here')
-            console.error('VITE_SUPABASE_ANON_KEY=your-key-here')
+            console.error('')
+            console.error('❌❌❌ CRITICAL ERROR ❌❌❌')
+            console.error('Missing Supabase environment variables!')
+            console.error('The app CANNOT connect to the database.')
+            console.error('')
+            console.error('FIX: Go to Vercel Dashboard → Settings → Environment Variables')
+            console.error('Add: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+            console.error('Then redeploy.')
+            console.error('')
         }
 
         // 2. Check browser capabilities
