@@ -158,11 +158,14 @@ export function useStudentProfile() {
         if (!user?.id) return { error: 'Not authenticated' }
 
         try {
+            // Remove headline from updates (students table doesn't have this column)
+            const { headline, ...dbUpdates } = updates
+
             const { error: updateError } = await supabase
                 .from('students')
                 .upsert({
                     id: user.id,
-                    ...updates,
+                    ...dbUpdates,
                 })
 
             if (updateError) {
