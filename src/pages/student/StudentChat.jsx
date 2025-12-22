@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Send, Paperclip, Phone, Video, MoreVertical, Loader } from 'lucide-react'
+import { ArrowLeft, Send, Paperclip, Phone, Video, MoreVertical, Loader, Sparkles } from 'lucide-react'
 import ChatBubble from '../../components/ChatBubble'
 import { useMessages } from '../../hooks/useMessages'
 import { useAuth } from '../../context/AuthContext'
@@ -145,8 +145,13 @@ function StudentChat() {
                     ))}
 
                     {messages.length === 0 && (
-                        <div className="text-center opacity-50 py-10">
-                            No messages yet. Start the conversation!
+                        <div className="empty-chat-state">
+                            <div className="text-center opacity-50 py-6">
+                                No messages yet. Start the conversation!
+                            </div>
+
+                            {/* AI Icebreakers */}
+                            <IcebreakerSuggestions matchId={matchId} onSelect={setNewMessage} />
                         </div>
                     )}
 
@@ -174,6 +179,59 @@ function StudentChat() {
                     <Send size={20} />
                 </button>
             </form>
+        </div>
+    )
+}
+
+function IcebreakerSuggestions({ matchId, onSelect }) {
+    const [suggestions, setSuggestions] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            try {
+                const { data, error } = await supabase.functions.invoke('suggest-icebreakers', {
+                    body: { match_id: matchId }
+                })
+
+                if (error) throw error
+                if (data?.suggestions) setSuggestions(data.suggestions)
+            } catch (err) {
+                console.error("Failed to load icebreakers:", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchSuggestions()
+    }, [matchId])
+
+    if (loading) return (
+        <div className="icebreakers-loading">
+            <Sparkles size={16} className="animate-pulse text-purple-500" />
+            <span>AI is brainstorming openers...</span>
+        </div>
+    )
+
+    if (suggestions.length === 0) return null
+
+    return (
+        <div className="icebreakers-container">
+            <div className="icebreakers-header">
+                <Sparkles size={16} className="text-purple-500" />
+                <span>AI Suggestions</span>
+            </div>
+            <div className="icebreakers-list">
+                {suggestions.map((text, i) => (
+                    <button
+                        key={i}
+                        className="icebreaker-chip"
+                        onClick={() => onSelect(text)}
+                    >
+                        {text}
+                    </button>
+                ))}
+            </div>
         </div>
     )
 }
