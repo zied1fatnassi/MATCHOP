@@ -127,16 +127,16 @@ export function useJobOffers() {
 
                 if (extData) {
                     externalOffers = extData.map(job => ({
-                        id: `ext-${job.id}`, // Flag as external ID
+                        id: `ext-${job.id}`,
                         title: job.title,
                         company: job.company_name,
-                        companyLogo: job.logo_url, // Might be null, UI handles it
+                        companyLogo: job.logo_url || job.logo, // Handle both potential field names
                         location: job.location,
-                        type: job.job_type,
+                        type: job.job_type || job.type || 'Full-time', // Handle variations
                         salary: job.salary_range || 'Competitive',
                         description: job.description,
-                        skills: [], // External jobs might not have parsed skills
-                        isExternal: true, // UI Flag
+                        skills: [],
+                        isExternal: true,
                         externalUrl: job.url,
                         matchScore: null
                     }))
