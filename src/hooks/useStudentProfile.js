@@ -213,6 +213,25 @@ export function useStudentProfile() {
 
             setProfile(prev => ({ ...prev, ...updates }))
             calculateCompletion({ ...profile, ...updates }, experiences, education)
+
+            // Generate embedding for semantic matching (async, don't wait)
+            if (updates.bio || updates.skills || updates.headline) {
+                const textForEmbedding = [
+                    updates.headline || profile?.headline || '',
+                    updates.bio || profile?.bio || '',
+                    (updates.skills || profile?.skills || []).join(', ')
+                ].filter(Boolean).join('. ')
+
+                if (textForEmbedding.length > 20) {
+                    supabase.functions.invoke('generate-embedding', {
+                        body: { text: textForEmbedding, type: 'student', id: user.id }
+                    }).then(({ error }) => {
+                        if (error) console.warn('[Embedding] Failed:', error)
+                        else console.log('[Embedding] Generated successfully')
+                    })
+                }
+            }
+
             return { error: null }
         } catch (err) {
             console.error('[updateProfile]', err)

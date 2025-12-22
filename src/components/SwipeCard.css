@@ -13,6 +13,37 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
+/* Match Score Badge */
+.match-score-badge {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+    z-index: 10;
+    animation: pulse-match 2s ease-in-out infinite;
+}
+
+@keyframes pulse-match {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
 .swipe-card.dragging {
     cursor: grabbing;
 }

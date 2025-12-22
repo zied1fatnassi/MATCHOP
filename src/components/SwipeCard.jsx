@@ -1,5 +1,6 @@
 import { motion, useMotionValue, useTransform, useSpring, useAnimation } from 'framer-motion'
-import { MapPin, Briefcase, DollarSign, Clock, Info } from 'lucide-react'
+import { MapPin, Briefcase, DollarSign, Clock, Info, Sparkles } from 'lucide-react'
+import VerificationBadge from './VerificationBadge'
 import './SwipeCard.css'
 
 /**
@@ -89,8 +90,18 @@ function SwipeCard({ offer, onSwipe, isTop, onViewDetails }) {
 
 // Reusable card content component
 function CardContent({ offer }) {
+    const matchPercent = offer.matchScore ? Math.round(offer.matchScore * 100) : null
+
     return (
         <>
+            {/* Match Score Badge */}
+            {matchPercent && (
+                <div className="match-score-badge">
+                    <Sparkles size={14} />
+                    <span>{matchPercent}% Match</span>
+                </div>
+            )}
+
             {/* Company Logo */}
             <div className="card-header">
                 <div className="company-logo">
@@ -101,7 +112,14 @@ function CardContent({ offer }) {
                     )}
                 </div>
                 <div className="company-info">
-                    <h3 className="company-name">{offer.company}</h3>
+                    <h3 className="company-name">
+                        {offer.company}
+                        <VerificationBadge
+                            verified={offer.companyVerified}
+                            verificationMethod={offer.companyVerificationMethod}
+                            size="xs"
+                        />
+                    </h3>
                     <span className="badge badge-primary">{offer.type || 'Full-time'}</span>
                 </div>
             </div>
