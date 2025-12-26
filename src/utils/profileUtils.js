@@ -1,10 +1,13 @@
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+// Imports removed to be dynamic
+// import html2canvas from 'html2canvas'
 
 /**
  * Export profile to PDF
  */
 export async function exportProfileToPDF(profile, experiences, education, certifications) {
+    // Dynamically import jsPDF only when needed to save bundle size
+    const { default: jsPDF } = await import('jspdf')
+
     const pdf = new jsPDF('p', 'mm', 'a4')
     const pageWidth = pdf.internal.pageSize.getWidth()
     let yPos = 20

@@ -18,6 +18,7 @@
     height: 42px;
     border-radius: 14px;
     transition: transform 0.3s ease;
+    will-change: transform;
 }
 
 .matchop-logo .shape-1 {
@@ -45,6 +46,7 @@
     border-radius: 3px;
     z-index: 10;
     transition: transform 0.3s ease;
+    will-change: transform;
 }
 
 .matchop-logo .logo-text {

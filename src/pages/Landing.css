@@ -253,11 +253,11 @@
     right: var(--space-4);
     font-size: 2rem;
     font-weight: 800;
-    color: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.15); /* Increased opacity for better visibility */
 
     /* Light watermark */
     [data-theme='dark'] & {
-        color: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.15); /* Increased opacity for dark mode */
     }
 }
 
@@ -312,8 +312,12 @@
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-4);
-    background: rgba(37, 99, 235, 0.1);
-    color: var(--primary);
+    background: rgba(37, 99, 235, 0.15); /* Slightly darker background */
+    color: #1e40af; /* darker blue for contrast */
+    [data-theme='dark'] & {
+      color: #60a5fa; /* Lighter blue for dark mode contrast */
+      background: rgba(37, 99, 235, 0.25);
+    }
     font-size: 0.9rem;
     font-weight: 600;
     border-radius: var(--radius-full);
@@ -321,8 +325,12 @@
 }
 
 .feature-badge.company {
-    background: rgba(13, 148, 136, 0.1);
-    color: var(--accent-teal);
+    background: rgba(13, 148, 136, 0.15);
+    color: #0f766e; /* Darker teal for contrast */
+    [data-theme='dark'] & {
+        color: #2dd4bf; /* Lighter teal for dark mode */
+        background: rgba(13, 148, 136, 0.25);
+    }
 }
 
 .feature-content h2 {
@@ -502,7 +510,10 @@
 
 .match-score {
     font-size: 0.8rem;
-    color: var(--accent-teal);
+    color: #0f766e; /* Darker teal for contrast */
+    [data-theme='dark'] & {
+        color: #2dd4bf;
+    }
     font-weight: 600;
 }
 

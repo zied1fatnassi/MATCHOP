@@ -32,6 +32,30 @@ const Footer = () => {
                         </p>
                     </div>
 
+                    {/* Founder Profile */}
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <img
+                                src="/founder.jpg"
+                                alt="Zied Fatnassi - Founder"
+                                style={{
+                                    width: '100px',
+                                    height: '100px',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    border: '3px solid var(--glass-border)',
+                                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                                }}
+                                width="100"
+                                height="100"
+                            />
+                            <div style={{ marginTop: '0.75rem' }}>
+                                <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>Zied Fatnassi</h4>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Founder & Developer</p>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Quick Links */}
                     <div>
                         <h4 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem' }}>Company</h4>

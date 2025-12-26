@@ -133,23 +133,7 @@ function Landing() {
                             </Link>
                         </div>
 
-                        <div className="feature-visual">
-                            <div className="founder-profile">
-                                <img
-                                    src="/founder.jpg"
-                                    alt="Zied Fatnassi - Founder"
-                                    className="founder-image floating"
-                                    loading="lazy"
-                                    decoding="async"
-                                    width="280"
-                                    height="280"
-                                />
-                                <div className="founder-info">
-                                    <h3 className="founder-name">Zied Fatnassi</h3>
-                                    <p className="founder-title">Founder & Developer of MatchOp</p>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
 
                     <div className="features-grid reverse">
@@ -224,20 +208,7 @@ function Landing() {
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer className="footer">
-                <div className="container">
-                    <div className="footer-content">
-                        <div className="footer-logo">
-                            <Logo size="default" showText={false} />
-                        </div>
-                        <p className="footer-tagline">{t('landing.footer')}</p>
-                    </div>
-                    <div className="footer-bottom">
-                        <p>© 2024 MatchOp. All rights reserved.</p>
-                    </div>
-                </div>
-            </footer>
+
         </div>
     )
 }

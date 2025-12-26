@@ -3,6 +3,7 @@ import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { Analytics } from '@vercel/analytics/react'
 import Navbar from './components/Navbar'
+import ScrollToTop from './components/ScrollToTop'
 import LoadingScreen from './components/LoadingScreen'
 import AuthToast from './components/AuthToast'
 import { ProtectedRoute, PublicRoute } from './components/RouteGuards'
@@ -10,8 +11,6 @@ import { useAuth } from './context/AuthContext'
 import DiagnosticHelper from './components/DiagnosticHelper'
 
 // Lazy load all page components for code splitting
-import Terms from './pages/legal/Terms'
-import Privacy from './pages/legal/Privacy'
 import Cookies from './pages/legal/Cookies'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -170,6 +169,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       {isLoading && (
         <LoadingScreen
           minDuration={1000}
@@ -220,9 +220,7 @@ function App() {
                   I should stick to the structure I just created.
               */}
 
-              {/* Re-wiring to use the new          {/* Legal Routes */}
-              <Route path="/legal/terms" element={<Terms />} />
-              <Route path="/legal/privacy" element={<Privacy />} />
+              {/* Legal Routes */}
               <Route path="/legal/cookies" element={<Cookies />} />
 
               {/* Public Info Routes */}
@@ -253,7 +251,7 @@ function App() {
           </Suspense>
         </main>
 
-        {!isLanding && <Footer />}
+        <Footer />
       </div>
     </>
   )
